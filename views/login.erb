@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Log In</title>
+</head>
+<body>
+  <div class="success"><%= flash[:success] %></div>
+  <div class="error"><%= flash[:error]%></div>
+  <div>Please log in (a new account will be created if username cannot be found)</div>
+<form method="post" action="/login">
+  <input type="text" name="username" placeholder="Username" />
+  <input type="password" name="password" placeholder="Password" />
+  <button type="submit">Log In</button>
+</form>
+</body>
+</html>
