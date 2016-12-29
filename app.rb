@@ -1,10 +1,18 @@
 require 'sinatra'
 require 'sinatra/flash'
+require 'dm-serializer'
 #require 'sinatra/base'
 require 'data_mapper'
 require File.dirname(__FILE__)+'/models.rb'
 require 'json'
 
+module CurrentWeek
+  def getWeekDate(day)
+    @currDate = Date.today
+    Date.commercial(@currDate.year,@currDate.cweek,day)
+  end
+end
+helpers CurrentWeek
 enable :sessions
 
 #for all routes except '/login' check if session with username is
@@ -64,13 +72,22 @@ end
 
 get '/' do
 	content_type 'html'
+  @currDate = Date.today
+  @weekStart = getWeekDate(1)
+  @weekEnd = getWeekDate(7)
+  #@weekStart = Date.commercial(@currDate.year,@currDate.cweek,1)
+  #@weekEnd = Date.commercial(@currDate.year,@currDate.cweek,7)
 	erb :index
 
 end
 
 get '/transactions.json' do
-	@transactions = Transaction.all
-	@transactions.to_json
+  @currWeekDateStart = getWeekDate(1)
+  @currWeekDateEnd = getWeekDate(7)
+	@transactions = Transaction.all(:transaction_date.gte=>@currWeekDateStart,:transaction_date.lte=>@currWeekDateEnd)
+  #@transactionItems = TransactionItem.all()
+  {:transactions=>@transactions}.to_json
+	#@transactions.to_json
 end
 
 post '/transactions.json' do
@@ -121,4 +138,19 @@ end
 
 get '/getdate' do
 	{:date=>DateTime.now}.to_json
+end
+
+get '/test' do
+  
+  # @transactionItem = TransactionItem.new
+  # @transactionItem.description = "tesst 36"
+  # @transactionItem.grand_total = 54
+  # @transactionItem.discount_total = 0.00
+  # @transactionItem.tax_total = 0.00
+  # @transactionItem.created_at = DateTime.now
+  # @transactionItem.updated_at = DateTime.now
+  # @transaction.transactionItems << @transactionItem
+  # @transactionItem.save
+
+  #@transaction.to_json
 end

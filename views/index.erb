@@ -25,6 +25,18 @@
     <div>Welcome, <%= session[:username]%> | <a href="/logout">Log Out</a></div>
   </header>
   <section>
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-xs-12">
+          <p><strong>Current Week: </strong><%= @weekStart.to_s%> - <%= @weekEnd.to_s%></p>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-xs-12">
+          <p><strong>Total Spent:</strong> <span data-bind="text: combinedTotal"></span></p>
+        </div>
+      </div>
+    </div>
     <div id="newTransactionForm">
         <h2>Add New Transaction</h2>
         <form id="addTransaction" data-bind="submit: addTransaction">

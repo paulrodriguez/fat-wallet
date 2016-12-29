@@ -5,9 +5,9 @@ function Transaction(data) {
   this.description = ko.observable(data.description);
 
   // cost totals information
-  this.grand_total    = ko.observable(data.grand_total);
-  this.tax_total      = ko.observable(data.tax_total);
-  this.discount_total = ko.observable(data.discount_total);
+  this.grand_total    = ko.observable(Number.parseFloat(data.grand_total));
+  this.tax_total      = ko.observable(Number.parseFloat(data.tax_total));
+  this.discount_total = ko.observable(Number.parseFloat(data.discount_total));
   // date information
   this.transaction_date = ko.observable(data.transaction_date);
   this.created_at       = ko.observable(data.created_at);
@@ -26,10 +26,24 @@ function TransactionViewModel() {
     t.newTransactionDate = ko.observable();
 
     $.getJSON("/transactions.json", function(raw) {
-        var transactions = $.map(raw, function(item) { return new Transaction(item) });
+        var transactions = $.map(raw.transactions, function(item) { return new Transaction(item) });
         t.transactions(transactions);
     });
 
+
+    t.combinedTotal = ko.pureComputed({
+      owner: t,
+      read: function() {
+        var total = 0;
+        for(var p =0; p < this.transactions().length; p++) {
+          // skip any destroyed items in observable array
+          if(this.transactions()[p]._destroy!==undefined && this.transactions()[p]._destroy==true) {continue;}
+          total += this.transactions()[p].grand_total();
+        }
+        return total;
+      },
+      deferEvaluation: true
+    });
     // builds new transaction item from fields and sends ajax request to save into backend model
     t.addTransaction = function() {
         var newTransaction = new Transaction({
@@ -56,7 +70,7 @@ function TransactionViewModel() {
       transaction._method = "delete";
       t.transactions.destroy(transaction);
       t.saveTransaction(transaction);
-    }
+    };
 
     t.resetFormFields = function() {
       this.newTransactionDescription("");

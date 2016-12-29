@@ -1,4 +1,4 @@
-DataMapper.setup(:default, "sqlite://"+File.dirname(__FILE__)+"/FatWallet.db")
+DataMapper.setup(:default, ENV['DATABASE_URL'] || "sqlite://"+File.dirname(__FILE__)+"/FatWallet.db")
 class User
 	include DataMapper::Resource
 	property :id, Serial
