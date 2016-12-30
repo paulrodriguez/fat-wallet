@@ -60,15 +60,40 @@
             <th>Actions</th>
           </tr>
         </thead>
-        <tbody data-bind="foreach: transactions">
+        <tbody data-bind="foreach: {data: transactions, as: 'transaction'}">
           <tr>
-            <td><input type="text" data-bind="textInput: $data.description" /></td>
-            <td data-bind="text: $data.grand_total"></td>
-            <td data-bind="text: $data.discount_total"></td>
-            <td data-bind="text: $data.tax_total"></td>
-            <td data-bind="text: $data.transaction_date"></td>
+            <td><input type="text" data-bind="textInput: transaction.description" /></td>
+            <td><input type="text" data-bind="textInput: transaction.grand_total" /></td>
+            <td data-bind="text: transaction.discount_total"></td>
+            <td data-bind="text: transaction.tax_total"></td>
+            <td data-bind="text: transaction.transaction_date"></td>
             <td><a href="#" data-bind="click:$parent.updateTransaction" class="glyphicon glyphicon-ok"></a> | <a href="#" data-bind="click:$parent.deleteTransaction" class="glyphicon glyphicon-remove"></a></td>
           </tr>
+          <tr>
+            <td colspan="5">
+            <table class="table col-xs-pull-1">
+              <tbody>
+                <tr><td colspan="5"><strong>New Item:</strong></td></tr>
+                <tr>
+                  <td><input type="text" data-bind="value: transaction.tiDescription" placeholder="Description"/></td>
+                  <td><input type="text" data-bind="value: transaction.tiGrandTotal" placeholder="Grand Total"/></td>
+                  <td><input type="text" data-bind="value: transaction.tiDiscountTotal" placeholder="Discount Total"/></td>
+                  <td><input type="text" data-bind="value: transaction.tiTaxTotal" placeholder="Tax Total"/></td>
+                  <td><button type="submit" data-bind="click: $root.addTransactionItem">Add Item</button></td>
+                </tr>
+                <tr><td colspan="5"><strong>Items List:</strong></td></tr>
+                <!-- ko foreach: {data: transaction.transaction_items, as: 'transaction_item'} -->
+                <tr>
+                  <td><input type="text" data-bind="value: transaction_item.description"/></td>
+                  <td><input type="text" data-bind="value: transaction_item.grand_total"/></td>
+                  <td data-bind="text:transaction_item.discount_total"></td>
+                  <td data-bind="text:transaction_item.tax_total"></td>
+                  <td><a href="#" data-bind="click:$root.updateTransactionItem" class="glyphicon glyphicon-ok"></a> | <a href="#" data-bind="click:$root.deleteTransactionItem.bind($data,{transaction: transaction,transaction_item: transaction_item})" class="glyphicon glyphicon-remove"></a></td>
+                </tr>
+                <!-- /ko -->
+              </tbody>
+            </table>
+          </td></tr>
         </tbody>
       </table>
     </div>

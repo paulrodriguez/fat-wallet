@@ -1,4 +1,19 @@
-// transaction item equivalent to backend
+// transaction item model
+function TransactionItem(data) {
+    this.id = ko.observable(data.id);
+    this.transaction_id = ko.observable(data.transaction_id);
+
+    this.description = ko.observable(data.description);
+
+    this.grand_total = ko.observable(data.grand_total);
+    this.discount_total = ko.observable(data.discount_total);
+    this.tax_total = ko.observable(data.tax_total);
+
+    this.created_at = ko.observable(data.created_at);
+    this.updated_at = ko.observable(data.updated_at);
+}
+
+// transaction model
 function Transaction(data) {
   this.id = ko.observable(data.id);
 
@@ -8,16 +23,27 @@ function Transaction(data) {
   this.grand_total    = ko.observable(Number.parseFloat(data.grand_total));
   this.tax_total      = ko.observable(Number.parseFloat(data.tax_total));
   this.discount_total = ko.observable(Number.parseFloat(data.discount_total));
+
   // date information
   this.transaction_date = ko.observable(data.transaction_date);
   this.created_at       = ko.observable(data.created_at);
   this.updated_at       = ko.observable(data.updated_at);
+
+  // items for the transaction
+  this.transaction_items = ko.observableArray(data.transaction_items);
+
+  // fields for each individual transaction to add items to it.
+  this.tiDescription = ko.observable();
+  this.tiGrandTotal = ko.observable("0.00");
+  this.tiDiscountTotal = ko.observable("0.00");
+  this.tiTaxTotal = ko.observable("0.00");
 };
 
 // the transaction view model that stores transaction array and operations for individual transaction
 function TransactionViewModel() {
     var t = this;
     t.transactions = new ko.observableArray([]);
+
     // fields to add new transaction
     t.newTransactionDescription = ko.observable();
     t.newTransactionGrandTotal = ko.observable();
@@ -25,12 +51,27 @@ function TransactionViewModel() {
     t.newTransactionTaxTotal = ko.observable("0.00");
     t.newTransactionDate = ko.observable();
 
+    // get transactions
     $.getJSON("/transactions.json", function(raw) {
-        var transactions = $.map(raw.transactions, function(item) { return new Transaction(item) });
+        //var transaction_items = $.map(raw.transa)
+        var transactions = $.map(raw.transactions, function(item) {
+          item.transaction_items = Array();
+          // build transaction items to add to transaction
+          if(raw.transaction_items[item.id]!==undefined) {
+            transaction_items_temp = $.map(raw.transaction_items[item.id],function(trans_item) {
+              return new TransactionItem(trans_item);
+            });
+
+            item.transaction_items = transaction_items_temp;
+          }
+
+          return new Transaction(item)
+        });
+
         t.transactions(transactions);
     });
 
-
+    //calculate combined total for each transaction
     t.combinedTotal = ko.pureComputed({
       owner: t,
       read: function() {
@@ -40,7 +81,7 @@ function TransactionViewModel() {
           if(this.transactions()[p]._destroy!==undefined && this.transactions()[p]._destroy==true) {continue;}
           total += this.transactions()[p].grand_total();
         }
-        return total;
+        return Number.parseFloat(total).toFixed(2);
       },
       deferEvaluation: true
     });
@@ -95,6 +136,88 @@ function TransactionViewModel() {
           }
       });
     };
+
+    t.getTransactionItems = function(transaction) {
+      console.log(transaction);
+
+      $.getJSON("/transaction_items.json",{transaction_id: transaction.id}, function(raw) {
+          console.log(raw);
+          //var transactions = $.map(raw.transactions, function(item) { return new Transaction(item) });
+          //t.transactions(transactions);
+      });
+    };
+
+    t.addTransactionItem = function(transaction) {
+      // create new transaction item
+      var newTransactionItem = new TransactionItem(
+        {
+          description: transaction.tiDescription,
+          grand_total: transaction.tiGrandTotal,
+          discount_total: transaction.discount_total,
+          tax_total: transaction.tax_total,
+          transaction_id: transaction.id
+        }
+      );
+      t.saveTransactionItem(newTransactionItem,transaction);
+      t.reserTransactionItemFields(transaction);
+    };
+
+    t.updateTransactionItem = function(transactionItem) {
+      //console.log(transactionItem);
+      transactionItem._method = "put";
+      t.saveTransactionItem(transactionItem);
+      return true;
+    };
+
+    t.deleteTransactionItem = function(data) {
+      console.log("data");
+      console.log(data);
+      data.transaction_item._method="delete";
+      t.saveTransactionItem(data.transaction_item, data.transaction);
+      //data.transaction.transaction_items.destroy(data.transaction_item);
+      //console.log(transaction);
+      //transactionItem._method = "delete";
+      //t.saveTransactionItem(transactionItem);
+      //return true;
+    };
+
+    t.saveTransactionItem = function(transactionItem,transaction) {
+      var jsonData = ko.toJS(transactionItem);
+      $.ajax({
+           url: "/transaction_items.json",
+           type: "POST",
+           data: jsonData
+      }).done(function(data){
+          // if successful in saving, update valuess
+          if(data.transaction_item!==undefined && data.status=="success"){
+            transactionItem.id(data.transaction_item.id);
+            transactionItem.grand_total(data.transaction_item.grand_total);
+            transactionItem.discount_total(data.transaction_item.discount_total);
+            transactionItem.tax_total(data.transaction_item.tax_total);
+            transactionItem.description(data.transaction_item.description);
+            transactionItem.created_at(data.transaction_item.created_at);
+            transactionItem.updated_at(data.transaction_item.updated_at);
+            transactionItem.transaction_id(data.transaction_item.transaction_id);
+          }
+          // add to array of corresponding transaction
+          if(data.method!==undefined) {
+            if(data.method=="add") {
+              transaction.transaction_items.push(transactionItem);
+            } else if(data.method="delete") {
+              transaction.transaction_items.destroy(transactionItem);
+            }
+          }
+
+
+      });
+    };
+
+    t.reserTransactionItemFields = function(transaction) {
+      transaction.tiDescription("");
+      transaction.tiGrandTotal("0.00");
+      transaction.tiDiscountTotal("0.00");
+      transaction.tiTaxTotal("0.00");
+    }
   };
 
   // initialize ko.

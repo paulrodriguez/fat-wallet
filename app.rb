@@ -85,9 +85,75 @@ get '/transactions.json' do
   @currWeekDateStart = getWeekDate(1)
   @currWeekDateEnd = getWeekDate(7)
 	@transactions = Transaction.all(:transaction_date.gte=>@currWeekDateStart,:transaction_date.lte=>@currWeekDateEnd)
+  @transaction_items = Hash.new
+  @transactions.each do |t|
+    @transaction_items[t.id] = t.transactionItems
+  end
   #@transactionItems = TransactionItem.all()
-  {:transactions=>@transactions}.to_json
+  {:transactions=>@transactions,:transaction_items=>@transaction_items}.to_json
 	#@transactions.to_json
+end
+
+get '/transaction_items.json' do
+  @transaction = Transaction.get(params[:transaction_id])
+  if @transaction.nil?
+    {:status=>"failure"}.to_json
+  else
+    {:transaction_items=>@transaction.transactionItems,:status=>"success"}.to_json
+  end
+end
+
+post '/transaction_items.json' do
+  @transaction = Transaction.get(params[:transaction_id])
+  if @transaction.nil?
+    {:status=>"failure"}.to_json
+  else
+    @transactionItem = TransactionItem.new
+    @transactionItem.description = params[:description]
+    @transactionItem.grand_total = params[:grand_total]
+    @transactionItem.discount_total = params[:discount_total]
+    @transactionItem.tax_total = params[:tax_total]
+    @transactionItem.created_at = DateTime.now
+    @transactionItem.updated_at = DateTime.now
+    @transaction.transactionItems << @transactionItem
+    if @transactionItem.save
+      {:transaction_item=>@transactionItem,:status=>"success",:method=>"add"}.to_json
+    else
+      {:transaction_item=>@transactionItem,:status=>"failure"}.to_json
+    end
+  end
+end
+
+put '/transaction_items.json' do
+  @transaction_item = TransactionItem.get(params[:id])
+  if @transaction_item.nil?
+    {:status=>"failure"}.to_json
+  else
+    @transaction_item.description = params[:description]
+    @transaction_item.grand_total = params[:grand_total]
+    @transaction_item.discount_total = params[:discount_total]
+    @transaction_item.tax_total = params[:tax_total]
+    @transaction_item.updated_at = DateTime.now
+
+    if @transaction_item.save
+      {:transaction_item=>@transaction_item,:status=>"success"}.to_json
+    else
+      {:status=>"failure"}.to_json
+    end
+  end
+end
+
+delete '/transaction_items.json' do
+  @transaction_item = TransactionItem.get(params[:id])
+  if @transaction_item.nil?
+    {:status=>"failure"}.to_json
+  else
+    if @transaction_item.destroy
+      {:status=>"success",:method=>"delete"}.to_json
+    else
+      {:status=>"failure"}.to_json
+    end
+  end
 end
 
 post '/transactions.json' do
@@ -141,7 +207,7 @@ get '/getdate' do
 end
 
 get '/test' do
-  
+
   # @transactionItem = TransactionItem.new
   # @transactionItem.description = "tesst 36"
   # @transactionItem.grand_total = 54
