@@ -51,6 +51,8 @@ function TransactionViewModel() {
     t.newTransactionTaxTotal = ko.observable("0.00");
     t.newTransactionDate = ko.observable();
 
+    t.weeklyLimit = ko.observable(100);
+
     // get transactions
     $.getJSON("/transactions.json", function(raw) {
         //var transaction_items = $.map(raw.transa)
@@ -84,6 +86,13 @@ function TransactionViewModel() {
         return Number.parseFloat(total).toFixed(2);
       },
       deferEvaluation: true
+    });
+
+    t.availableLimit = ko.pureComputed({
+      owner: t,
+      read: function() {
+        return this.weeklyLimit() - this.combinedTotal();
+      }
     });
     // builds new transaction item from fields and sends ajax request to save into backend model
     t.addTransaction = function() {

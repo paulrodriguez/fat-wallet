@@ -81,6 +81,16 @@ get '/' do
 
 end
 
+get '/account' do
+  content_type 'html'
+  @user = User.first(:username=>session[:username])
+  erb :account
+end
+
+put '/account.json' do
+  {:p=>params}.to_json
+end
+
 get '/transactions.json' do
   @currWeekDateStart = getWeekDate(1)
   @currWeekDateEnd = getWeekDate(7)
