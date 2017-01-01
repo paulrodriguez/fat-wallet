@@ -70,13 +70,19 @@ function Transaction(data) {
   this.tiTaxTotal = ko.observable("0.00");
 };
 
-
+function CurrentWeek() {
+  this.days_from_current_date = ko.observable(0);
+  this.current_week_start = ko.observable();
+  this.current_week_end = ko.observable();
+  this.full_week = ko.observable();
+}
 
 // the transaction view model that stores transaction array and operations for individual transaction
 function TransactionViewModel() {
     var t = this;
     t.transactions = new ko.observableArray([]);
 
+    t.current_week = new CurrentWeek();
     // fields to add new transaction
     t.newTransactionDescription = ko.observable();
     t.newTransactionGrandTotal = ko.observable();
@@ -87,24 +93,58 @@ function TransactionViewModel() {
     t.weeklyLimit = ko.observable(100.00);
 
     // get transactions
-    $.getJSON("/transactions.json", function(raw) {
-        //var transaction_items = $.map(raw.transa)
-        var transactions = $.map(raw.transactions, function(item) {
-          item.transaction_items = Array();
-          // build transaction items to add to transaction
-          if(raw.transaction_items[item.id]!==undefined) {
-            transaction_items_temp = $.map(raw.transaction_items[item.id],function(trans_item) {
-              return new TransactionItem(trans_item);
-            });
+    t.loadTransactions = function() {
+      $.getJSON("/transactions.json", function(raw) {
+          var transactions = $.map(raw.transactions, function(item) {
+            item.transaction_items = Array();
+            // build transaction items to add to transaction
+            if(raw.transaction_items[item.id]!==undefined) {
+              transaction_items_temp = $.map(raw.transaction_items[item.id],function(trans_item) {
+                return new TransactionItem(trans_item);
+              });
 
-            item.transaction_items = transaction_items_temp;
-          }
+              item.transaction_items = transaction_items_temp;
+            }// end if
 
-          return new Transaction(item)
-        });
+            return new Transaction(item);
+          }); // $.map
 
-        t.transactions(transactions);
-    });
+          t.transactions(transactions);
+      }); // end $.getJSON
+    };
+
+    t.loadCurrentWeekInfo = function() {
+      $.getJSON("/week_dates.json",function(raw){
+        t.setCurrentWeek.call(t.current_week,raw);
+      });
+    }
+    // load info for the first time
+    t.loadTransactions();
+    t.loadCurrentWeekInfo();
+
+    t.setCurrentWeek = function(data) {
+      this.days_from_current_date(data.days_from_current_date);
+      this.current_week_start(data.current_week_start);
+      this.current_week_end(data.current_week_end);
+      this.full_week(data.full_week);
+    }
+
+    t.getDifferentWeek = function(data) {
+      $.ajax({
+           url: "/week_dates.json",
+           type: "POST",
+           data: data
+      }).done(function(res){
+          t.setCurrentWeek.call(t.current_week,res);
+          t.reloadTransactions();
+      });
+
+    };
+
+    t.reloadTransactions = function() {
+      t.transactions.removeAll();
+      t.loadTransactions();
+    };
 
     //calculate combined total for each transaction
     t.combinedTotal = ko.pureComputed({
@@ -137,7 +177,6 @@ function TransactionViewModel() {
           discount_total: this.newTransactionTaxTotal(),
           transaction_date: this.newTransactionDate()
         });
-        //console.log(ko.toJS(newTransaction));
 
         t.transactions.push(newTransaction);
         t.saveTransaction(newTransaction);
@@ -181,10 +220,7 @@ function TransactionViewModel() {
     };
 
     t.getTransactionItems = function(transaction) {
-      console.log(transaction);
-
       $.getJSON("/transaction_items.json",{transaction_id: transaction.id}, function(raw) {
-          console.log(raw);
           //var transactions = $.map(raw.transactions, function(item) { return new Transaction(item) });
           //t.transactions(transactions);
       });
@@ -206,22 +242,14 @@ function TransactionViewModel() {
     };
 
     t.updateTransactionItem = function(transactionItem) {
-      //console.log(transactionItem);
       transactionItem._method = "put";
       t.saveTransactionItem(transactionItem);
       return true;
     };
 
     t.deleteTransactionItem = function(data) {
-      console.log("data");
-      console.log(data);
       data.transaction_item._method="delete";
       t.saveTransactionItem(data.transaction_item, data.transaction);
-      //data.transaction.transaction_items.destroy(data.transaction_item);
-      //console.log(transaction);
-      //transactionItem._method = "delete";
-      //t.saveTransactionItem(transactionItem);
-      //return true;
     };
 
     t.saveTransactionItem = function(transactionItem,transaction) {

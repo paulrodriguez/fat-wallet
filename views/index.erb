@@ -2,7 +2,11 @@
     <div class="container-fluid">
       <div class="row">
         <div class="col-xs-12">
-          <p><strong>Current Week: </strong><%= @weekStart.to_s%> - <%= @weekEnd.to_s%></p>
+          <p><strong>Current Week:</strong><br>
+          <span class="glyphicon glyphicon-chevron-left" data-bind="click:getDifferentWeek.bind($data,{days_to_add:-7})"></span>
+          <span data-bind="text: current_week.full_week"><%= @weekStart.strftime("%m/%d/%Y")%> - <%= @weekEnd.strftime("%m/%d/%Y")%></span>
+          <span class="glyphicon glyphicon-chevron-right" data-bind="click:getDifferentWeek.bind($data,{days_to_add:7})"></span>
+        </p>
         </div>
       </div>
       <div class="row">
@@ -42,7 +46,7 @@
             <td data-bind="text: transaction.discount_total"></td>
             <td data-bind="text: transaction.tax_total"></td>
             <td data-bind="formatDate: transaction.transaction_date"></td>
-            <td><a href="#" data-bind="click:$parent.updateTransaction" class="glyphicon glyphicon-ok"></a> | <a href="#" data-bind="click:$parent.deleteTransaction" class="glyphicon glyphicon-remove"></a></td>
+            <td><a data-bind="click:$parent.updateTransaction" class="glyphicon glyphicon-ok"></a> | <a href="#" data-bind="click:$parent.deleteTransaction" class="glyphicon glyphicon-remove"></a></td>
           </tr>
           <tr>
             <td colspan="5">

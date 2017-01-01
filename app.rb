@@ -7,10 +7,24 @@ require File.dirname(__FILE__)+'/models.rb'
 require 'json'
 
 module CurrentWeek
+  # 1=>Monday, 2=>Tuesday, 3=>Wednesday, 4=>Thursday, 5 => Friday, 6 => Saturday, 7=>Sunday
   def getWeekDate(day)
     @currDate = Date.today
-    Date.commercial(@currDate.year,@currDate.cweek,day)
+    @currWeekDate = @currDate-@currDate.cwday+day+getDaysFromCurrentDate
   end
+
+  def getDaysFromCurrentDate
+    if !session[:days_from_current_date].nil?
+      session[:days_from_current_date].to_i
+    else
+      0
+    end
+  end
+
+  def setDaysFromCurrentDate(days_to_add)
+    session[:days_from_current_date] = days_to_add
+  end
+
 end
 helpers CurrentWeek
 enable :sessions
@@ -90,6 +104,27 @@ end
 
 put '/account.json' do
   {:p=>params}.to_json
+end
+
+get '/week_dates.json' do
+  @currWeekDateStart = getWeekDate(1)
+  @currWeekDateEnd = getWeekDate(7)
+  {:full_week=>@currWeekDateStart.strftime("%m/%d/%Y")+" - "+@currWeekDateEnd.strftime("%m/%d/%Y"),
+  :current_week_start=>@currWeekDateStart,:current_week_end=>@currWeekDateEnd,
+  :days_from_current_date=>getDaysFromCurrentDate}.to_json
+end
+
+post '/week_dates.json' do
+  if(params[:days_to_add])
+    days_from_current_date = getDaysFromCurrentDate+params[:days_to_add].to_i
+    setDaysFromCurrentDate(days_from_current_date)
+  end
+
+  @currWeekDateStart = getWeekDate(1)
+  @currWeekDateEnd = getWeekDate(7)
+  {:full_week=>@currWeekDateStart.strftime("%m/%d/%Y")+" - "+@currWeekDateEnd.strftime("%m/%d/%Y"),
+  :current_week_start=>@currWeekDateStart,:current_week_end=>@currWeekDateEnd,
+  :days_from_current_date=>getDaysFromCurrentDate}.to_json
 end
 
 get '/transactions.json' do
@@ -218,7 +253,6 @@ get '/getdate' do
 end
 
 get '/test' do
-
   # @transactionItem = TransactionItem.new
   # @transactionItem.description = "tesst 36"
   # @transactionItem.grand_total = 54
