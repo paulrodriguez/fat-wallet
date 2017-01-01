@@ -72,12 +72,13 @@ end
 
 get '/' do
 	content_type 'html'
+  @script = "js/app.js"
   @currDate = Date.today
   @weekStart = getWeekDate(1)
   @weekEnd = getWeekDate(7)
   #@weekStart = Date.commercial(@currDate.year,@currDate.cweek,1)
   #@weekEnd = Date.commercial(@currDate.year,@currDate.cweek,7)
-	erb :index
+	erb :index, :layout=>:"layouts/main"
 
 end
 
@@ -172,7 +173,7 @@ post '/transactions.json' do
   @transaction.grand_total = params[:grand_total]
   @transaction.discount_total = params[:discount_total]
   @transaction.tax_total = params[:tax_total]
-  @transaction.transaction_date = DateTime.parse(params[:transaction_date])
+  @transaction.transaction_date = Date.strptime(params[:transaction_date], "%m/%d/%Y").to_datetime
   @transaction.created_at = DateTime.now
   @transaction.updated_at = DateTime.now
 

@@ -18,7 +18,7 @@
         <!-- Optional theme -->
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
 
-        <!-- bootstrap datepicker -->
+        <!-- bootstrap datepicker css -->
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.6.4/css/bootstrap-datepicker.min.css" crossorigin="anonymous" />
 
 
@@ -27,32 +27,17 @@
   <header>
     <div>Welcome, <%= session[:username]%> | <a href="/logout">Log Out</a></div>
   </header>
-  <form data-bind="submit: onSubmit">
-    <input type="hidden" name="_method" value="put" />
-    <div class="form-group">
-      <div class="row">
-        <div class="col-xs-2">
-          <input type="password" name="password" placeholder="Password"/>
-          <p data-bind="text: errorPassword" class="alert-danger"></p>
-        </div>
-        <div class="col-xs-2">
-          <input type="password" name="password_confirm" placeholder="Confirm Password"/>
-          <p data-bind="text: errorConfirmPassword" class="alert-danger"></p>
-        </div>
-        <div class="col-xs-2">
-          <button type="submit">Save</submit>
-        </div>
-      </div>
-    </div>
-
-  </form>
-
+  <%= yield %>
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
-  <script>window.jQuery || document.write('<script src="scripts/jquery.js"><\/script>')</script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.4.1/knockout-min.js"></script>
-  <!-- Latest compiled and minified JavaScript -->
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.6.4/js/bootstrap-datepicker.min.js" crossorigin="anonymous"></script>
-  <script src="js/account.js"></script>
+      <script>window.jQuery || document.write('<script src="scripts/jquery.js"><\/script>')</script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.4.1/knockout-min.js"></script>
+      <!-- Latest compiled and minified JavaScript -->
+      <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+      <!-- bootstrap datepicker css -->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.6.4/js/bootstrap-datepicker.min.js" crossorigin="anonymous"></script>
+
+      <% if !(defined?(@script)).nil? %>
+      <script src="<%= @script %>"></script>
+      <% end %>
 </body>
 </html>

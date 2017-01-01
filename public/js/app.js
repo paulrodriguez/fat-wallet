@@ -1,3 +1,34 @@
+/*ko.extenders.formatDate = function(target, option) {
+    //create a writable computed observable to intercept writes to our observable
+    var result = ko.pureComputed({
+        read: function() {
+          target("testing");
+        }
+    }).extend({ notify: 'always' });
+
+    //initialize with current value to make sure it is rounded appropriately
+    result(target());
+
+    //return the new computed observable
+    return result;
+};*/
+
+
+ko.bindingHandlers.formatDate = {
+    init: function (element, valueAccessor, allBindingsAccessor) {
+        var value = ko.unwrap(valueAccessor());
+        var arr1 = value.split("T");
+        if(arr1.length) {
+          var arr2 = arr1[0].split("-");
+          if(arr2.length==3) {
+            value = arr2[1]+"/"+arr2[2]+"/"+arr2[0];
+          }
+        }
+        $(element).text(value);
+    }
+};
+
+
 // transaction item model
 function TransactionItem(data) {
     this.id = ko.observable(data.id);
@@ -25,7 +56,7 @@ function Transaction(data) {
   this.discount_total = ko.observable(Number.parseFloat(data.discount_total));
 
   // date information
-  this.transaction_date = ko.observable(data.transaction_date);
+  this.transaction_date = ko.observable(data.transaction_date);//.extend({formatDate:"mm/dd/yyyy"});
   this.created_at       = ko.observable(data.created_at);
   this.updated_at       = ko.observable(data.updated_at);
 
@@ -38,6 +69,8 @@ function Transaction(data) {
   this.tiDiscountTotal = ko.observable("0.00");
   this.tiTaxTotal = ko.observable("0.00");
 };
+
+
 
 // the transaction view model that stores transaction array and operations for individual transaction
 function TransactionViewModel() {
@@ -94,6 +127,7 @@ function TransactionViewModel() {
         return this.weeklyLimit() - this.combinedTotal();
       }
     });
+
     // builds new transaction item from fields and sends ajax request to save into backend model
     t.addTransaction = function() {
         var newTransaction = new Transaction({
