@@ -84,7 +84,7 @@ function TransactionViewModel() {
     t.newTransactionTaxTotal = ko.observable("0.00");
     t.newTransactionDate = ko.observable();
 
-    t.weeklyLimit = ko.observable(100);
+    t.weeklyLimit = ko.observable(100.00);
 
     // get transactions
     $.getJSON("/transactions.json", function(raw) {
@@ -124,7 +124,7 @@ function TransactionViewModel() {
     t.availableLimit = ko.pureComputed({
       owner: t,
       read: function() {
-        return this.weeklyLimit() - this.combinedTotal();
+        return (this.weeklyLimit() - this.combinedTotal()).toFixed(2);
       }
     });
 
