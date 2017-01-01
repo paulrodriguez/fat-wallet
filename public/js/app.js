@@ -56,7 +56,7 @@ function Transaction(data) {
   this.discount_total = ko.observable(Number.parseFloat(data.discount_total));
 
   // date information
-  this.transaction_date = ko.observable(data.transaction_date);//.extend({formatDate:"mm/dd/yyyy"});
+  this.transaction_date = ko.observable(data.transaction_date);
   this.created_at       = ko.observable(data.created_at);
   this.updated_at       = ko.observable(data.updated_at);
 
