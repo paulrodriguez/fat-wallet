@@ -3,6 +3,9 @@
       <div class="row">
         <div class="col-xs-12">
           <p><strong>Current Week:</strong><br>
+
+          <p>Week's Goal Limit: <input type="text" data-bind="value: weeklyGoal.limit_amount, event:{change:saveCurrentWeeklyGoal.bind($data,weeklyGoal)}" /></p>
+
           <span class="glyphicon glyphicon-chevron-left" data-bind="click:getDifferentWeek.bind($data,{days_to_add:-7})"></span>
           <span data-bind="text: current_week.full_week"><%= @weekStart.strftime("%m/%d/%Y")%> - <%= @weekEnd.strftime("%m/%d/%Y")%></span>
           <span class="glyphicon glyphicon-chevron-right" data-bind="click:getDifferentWeek.bind($data,{days_to_add:7})"></span>

@@ -1,6 +1,7 @@
 require 'sinatra'
 require 'sinatra/flash'
 require 'dm-serializer'
+require 'digest/sha1'
 #require 'sinatra/base'
 require 'data_mapper'
 require File.dirname(__FILE__)+'/models.rb'
@@ -12,7 +13,16 @@ module CurrentWeek
     @currDate = Date.today
     @currWeekDate = @currDate-@currDate.cwday+day+getDaysFromCurrentDate
   end
-
+  def getCurrentMonth
+    @currDate = Date.today.prev_month(getMonthsToAdd)
+  end
+  def getMonthsToAdd
+    if !session[:months_to_add].nil?
+      session[:months_to_add].to_i
+    else
+      0
+    end
+  end
   def getDaysFromCurrentDate
     if !session[:days_from_current_date].nil?
       session[:days_from_current_date].to_i
@@ -30,7 +40,7 @@ helpers CurrentWeek
 enable :sessions
 
 #for all routes except '/login' check if session with username is
-before %r{^(?!/login$)} do
+before %r{^(?!(/login|/register)$)} do
 
   if session[:username].nil?
 		redirect '/login'
@@ -58,31 +68,48 @@ get '/login' do
 end
 
 post '/login' do
+  errors = Array.new
 	@user = User.first(:username=>params[:username])
 	if !@user.nil?
-		if @user.password==params[:password]
+		if @user.password==Digest::SHA1.base64digest(params[:password])
       session[:username] = @user.username
+      session[:user_id] = @user.id
       redirect "/"
     else
-      flash[:error] = "incorrect password"
+      errors << "incorrect password"
+      flash[:error] = errors
     end
 	else
-    @new_user = User.new
-    @new_user.username = params[:username]
-    @new_user.password = params[:password]
-    @new_user.created_at = DateTime.now
-    @new_user.updated_at = DateTime.now
-    if @new_user.save
-      session[:username] = @new_user.username
-      flash[:success] = "Account successfully created"
-      redirect "/"
-    else
-      flash[:error] = "unable to created account"
-    end
+    errors << "no account found with the specified username"
+    flash[:error] = errors
 	end
   erb :login
 end
 
+post '/register' do
+  @new_user =User.new
+  @new_user.username = params[:username]
+  @new_user.password = Digest::SHA1.base64digest(params[:password])
+  @new_user.email    = params[:email]
+  @new_user.created_at = DateTime.now
+  @new_user.updated_at = DateTime.now
+  if @new_user.save
+    session[:username] = @new_user.username
+    session[:user_id] = @new_user.id
+    flash[:success] = "Account successfully created"
+    redirect "/"
+  else
+    errors = Array.new
+    errors << "unable to create account"
+    @new_user.errors.each do |e|
+
+      errors << e.to_s
+    end
+    flash[:error] = errors
+  end
+
+  redirect "/login"
+end
 
 get '/' do
 	content_type 'html'
@@ -90,8 +117,6 @@ get '/' do
   @currDate = Date.today
   @weekStart = getWeekDate(1)
   @weekEnd = getWeekDate(7)
-  #@weekStart = Date.commercial(@currDate.year,@currDate.cweek,1)
-  #@weekEnd = Date.commercial(@currDate.year,@currDate.cweek,7)
 	erb :index, :layout=>:"layouts/main"
 
 end
@@ -127,10 +152,48 @@ post '/week_dates.json' do
   :days_from_current_date=>getDaysFromCurrentDate}.to_json
 end
 
+get '/weekly_goals.json' do
+  @weekly_goal = WeeklyGoal.first(:user_id=>session[:user_id],:start_date.gte=>getWeekDate(1),:end_date.lte=>getWeekDate(7))
+  if(@weekly_goal.nil?)
+    {:status=>"failure"}.to_json
+  else
+    {:weekly_goal=>@weekly_goal,:status=>"success"}.to_json
+  end
+end
+
+post '/weekly_goals.json' do
+  @weekly_goal = WeeklyGoal.new
+
+  @weekly_goal.start_date = getWeekDate(1)
+  @weekly_goal.end_date = getWeekDate(7)
+  @weekly_goal.user_id = session[:user_id]
+  @weekly_goal.limit_amount = params[:limit_amount]
+
+  if @weekly_goal.save
+    {:weekly_goal=>@weekly_goal,:status=>"success"}.to_json
+  else
+    {:errors=>@weekly_goal.errors.full_messages,:status=>"failure"}.to_json
+  end
+end
+
+put '/weekly_goals.json' do
+  @weekly_goal = WeeklyGoal.get(params[:id])
+  if @weekly_goal.nil?
+    {:errors=>Array.new("invalid id"),:status=>"failure"}.to_json
+  else
+    @weekly_goal.limit_amount = params[:limit_amount]
+    if @weekly_goal.save
+      {:weekly_goal=>@weekly_goal,:status=>"success"}.to_json
+    else
+      {:errors=>@weekly_goal.errors.full_messages,:status=>"failure"}.to_json
+    end
+  end
+end
+
 get '/transactions.json' do
   @currWeekDateStart = getWeekDate(1)
   @currWeekDateEnd = getWeekDate(7)
-	@transactions = Transaction.all(:transaction_date.gte=>@currWeekDateStart,:transaction_date.lte=>@currWeekDateEnd)
+	@transactions = Transaction.all(:transaction_date.gte=>@currWeekDateStart,:transaction_date.lte=>@currWeekDateEnd,:user_id=>session[:user_id])
   @transaction_items = Hash.new
   @transactions.each do |t|
     @transaction_items[t.id] = t.transactionItems
@@ -211,6 +274,7 @@ post '/transactions.json' do
   @transaction.transaction_date = Date.strptime(params[:transaction_date], "%m/%d/%Y").to_datetime
   @transaction.created_at = DateTime.now
   @transaction.updated_at = DateTime.now
+  @transaction.user_id    = session[:user_id]
 
   if @transaction.save
     {:transaction=>@transaction,:status=>"success"}.to_json
@@ -250,18 +314,4 @@ end
 
 get '/getdate' do
 	{:date=>DateTime.now}.to_json
-end
-
-get '/test' do
-  # @transactionItem = TransactionItem.new
-  # @transactionItem.description = "tesst 36"
-  # @transactionItem.grand_total = 54
-  # @transactionItem.discount_total = 0.00
-  # @transactionItem.tax_total = 0.00
-  # @transactionItem.created_at = DateTime.now
-  # @transactionItem.updated_at = DateTime.now
-  # @transaction.transactionItems << @transactionItem
-  # @transactionItem.save
-
-  #@transaction.to_json
 end

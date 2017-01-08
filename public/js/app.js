@@ -77,6 +77,13 @@ function CurrentWeek() {
   this.full_week = ko.observable();
 }
 
+function WeeklyGoal() {
+  this.start_date = ko.observable();
+  this.end_date = ko.observable();
+  this.id = ko.observable();
+  this.limit_amount = ko.observable(100.00);
+}
+
 // the transaction view model that stores transaction array and operations for individual transaction
 function TransactionViewModel() {
     var t = this;
@@ -90,7 +97,7 @@ function TransactionViewModel() {
     t.newTransactionTaxTotal = ko.observable("0.00");
     t.newTransactionDate = ko.observable();
 
-    t.weeklyLimit = ko.observable(100.00);
+    t.weeklyGoal = new WeeklyGoal();//ko.observable(100.00);
 
     // get transactions
     t.loadTransactions = function() {
@@ -117,10 +124,53 @@ function TransactionViewModel() {
       $.getJSON("/week_dates.json",function(raw){
         t.setCurrentWeek.call(t.current_week,raw);
       });
+    };
+
+    t.loadCurrentWeeklyGoal = function() {
+        $.getJSON("/weekly_goals.json",function(raw){
+          if(raw.weekly_goal!="undefined" && raw.status=="success") {
+            /*t.weeklyGoal.limit_amount(raw.weekly_goal.limit_amount);
+            t.weeklyGoal.start_date(raw.weekly_goal.start_date);
+            t.weeklyGoal.end_date(raw.weekly_goal.end_date);
+            t.weeklyGoal.id(raw.weekly_goal.id);*/
+            t.setCurrentWeeklyGoal.call(t.weeklyGoal,raw.weekly_goal);
+          } else {
+            t.setCurrentWeeklyGoal.call(t.weeklyGoal,{limit_amount:100.00,start_date:"",end_date:"",id:null});
+          }
+        });
+    };
+
+    t.saveCurrentWeeklyGoal = function(data) {
+      var id = ko.unwrap(data.id());
+      if(id!==undefined || id!==null) {
+        data._method = 'put';
+      }
+      //console.log(data);
+      var jsonData = ko.toJS(data);
+      $.ajax({
+        url: "/weekly_goals.json",
+        type: "POST",
+        data: jsonData
+
+      }).done(function(res){
+        if(res.weekly_goal!==undefined) {
+          t.setCurrentWeeklyGoal.call(t.weeklyGoal,res.weekly_goal);
+          /*t.weeklyGoal.id(res.weekly_goal.user_id);
+          t.weeklyGoal.limit_amount(res.weekly_goal.limit_amount);
+          t.weeklyGoal.start_date(res.weekly_goal.start_date);
+          t.weeklyGoal.end_date(res.weekly_goal.end_date);*/
+        }
+        if(res.errors!==undefined) {
+          alert(res.errors.join("<br />"));
+        }
+      });
     }
+
+
     // load info for the first time
     t.loadTransactions();
     t.loadCurrentWeekInfo();
+    t.loadCurrentWeeklyGoal();
 
     t.setCurrentWeek = function(data) {
       this.days_from_current_date(data.days_from_current_date);
@@ -137,6 +187,7 @@ function TransactionViewModel() {
       }).done(function(res){
           t.setCurrentWeek.call(t.current_week,res);
           t.reloadTransactions();
+          t.loadCurrentWeeklyGoal();
       });
 
     };
@@ -164,7 +215,7 @@ function TransactionViewModel() {
     t.availableLimit = ko.pureComputed({
       owner: t,
       read: function() {
-        return (this.weeklyLimit() - this.combinedTotal()).toFixed(2);
+        return (this.weeklyGoal.limit_amount() - this.combinedTotal()).toFixed(2);
       }
     });
 
@@ -202,6 +253,12 @@ function TransactionViewModel() {
       this.newTransactionTaxTotal("");
       this.newTransactionDate("");
     };
+    t.setCurrentWeeklyGoal = function(data) {
+      this.start_date(data.start_date);
+      this.end_date(data.end_date);
+      this.id(data.id);
+      this.limit_amount(data.limit_amount);
+    }
 
     t.saveTransaction = function(transaction) {
       var myData = ko.toJS(transaction);
