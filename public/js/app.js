@@ -84,6 +84,13 @@ function WeeklyGoal() {
   this.limit_amount = ko.observable(100.00);
 }
 
+function MonthlyGoal() {
+  this.month = ko.observable();
+  this.year =  ko.observable();
+  this.id = ko.observable();
+  this.limit_amount = ko.observable(1000.00);
+}
+
 // the transaction view model that stores transaction array and operations for individual transaction
 function TransactionViewModel() {
     var t = this;
@@ -129,10 +136,6 @@ function TransactionViewModel() {
     t.loadCurrentWeeklyGoal = function() {
         $.getJSON("/weekly_goals.json",function(raw){
           if(raw.weekly_goal!="undefined" && raw.status=="success") {
-            /*t.weeklyGoal.limit_amount(raw.weekly_goal.limit_amount);
-            t.weeklyGoal.start_date(raw.weekly_goal.start_date);
-            t.weeklyGoal.end_date(raw.weekly_goal.end_date);
-            t.weeklyGoal.id(raw.weekly_goal.id);*/
             t.setCurrentWeeklyGoal.call(t.weeklyGoal,raw.weekly_goal);
           } else {
             t.setCurrentWeeklyGoal.call(t.weeklyGoal,{limit_amount:100.00,start_date:"",end_date:"",id:null});
@@ -142,7 +145,7 @@ function TransactionViewModel() {
 
     t.saveCurrentWeeklyGoal = function(data) {
       var id = ko.unwrap(data.id());
-      if(id!==undefined || id!==null) {
+      if(id!==undefined && id!==null) {
         data._method = 'put';
       }
       //console.log(data);
