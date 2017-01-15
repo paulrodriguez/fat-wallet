@@ -224,6 +224,8 @@ function TransactionViewModel() {
 
     // builds new transaction item from fields and sends ajax request to save into backend model
     t.addTransaction = function() {
+      console.log("submitted unsing neter key");
+      return;
         var newTransaction = new Transaction({
           description: this.newTransactionDescription(),
           grand_total: this.newTransactionGrandTotal(),
@@ -242,6 +244,10 @@ function TransactionViewModel() {
         t.saveTransaction(transaction);
         return true;
     };
+
+    t.testTransaction = function(transaction) {
+      console.log(transaction);
+    }
 
     t.deleteTransaction = function(transaction) {
       transaction._method = "delete";

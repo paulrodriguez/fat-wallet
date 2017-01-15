@@ -1,0 +1,12 @@
+.transaction-container {
+  padding-top: 10px;
+  padding-bottom: 10px;
+  border-top: 1px solid #000;
+}
+.even {
+  background-color: #f9f9f9;
+}
+
+.btn {
+  margin:19px 0;
+}
