@@ -93,6 +93,10 @@
             <input class="form-control" type="text" data-bind="{textInput: transaction.tiDescription,event: {keyup: $root.addTransactionItem}}" />
           </div>
           <div class="col-xs-6">
+            <label>Quantity</label>
+            <input class="form-control" type="text"  data-bind="{textInput: transaction.tiQuantity,event: {keyup: $root.addTransactionItem}}" />
+          </div>
+          <div class="col-xs-6">
             <label>Grand Total</label>
             <input class="form-control" type="text"  data-bind="{textInput: transaction.tiGrandTotal,event: {keyup: $root.addTransactionItem}}" />
           </div>
@@ -111,9 +115,13 @@
         <div data-bind="foreach: {data: transaction.transaction_items, as: 'transaction_item'}">
           <div class="transaction-item-row" data-bind="css:{'even': ($index() % 2==0),'odd':($index()%2==1)}">
             <div class="col-sm-10">
-              <div class="col-sm-6">
+              <div class="col-sm-12">
                 <label>Description</label>
                 <input class="form-control" type="text" data-bind="{textInput: transaction_item.description,event: {keyup: $root.updateTransactionItem}}"/>
+              </div>
+              <div class="col-sm-6">
+                <label>Quantity</label>
+                <input class="form-control" type="text" data-bind="{textInput: transaction_item.quantity,event: {keyup: $root.updateTransactionItem}}"/>
               </div>
               <div class="col-sm-6">
                 <label>Grand Total</label>

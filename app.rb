@@ -222,6 +222,7 @@ post '/transaction_items.json' do
     @transactionItem.grand_total = params[:grand_total]
     @transactionItem.discount_total = params[:discount_total]
     @transactionItem.tax_total = params[:tax_total]
+    @transactionItem.quantity = params[:quantity]
     @transactionItem.created_at = DateTime.now
     @transactionItem.updated_at = DateTime.now
     @transaction.transactionItems << @transactionItem
@@ -242,6 +243,7 @@ put '/transaction_items.json' do
     @transaction_item.grand_total = params[:grand_total]
     @transaction_item.discount_total = params[:discount_total]
     @transaction_item.tax_total = params[:tax_total]
+    @transaction_item.quantity = params[:quantity]
     @transaction_item.updated_at = DateTime.now
 
     if @transaction_item.save

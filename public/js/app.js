@@ -44,7 +44,7 @@ function TransactionItem(data) {
     this.grand_total = ko.observable(data.grand_total);
     this.discount_total = ko.observable(data.discount_total);
     this.tax_total = ko.observable(data.tax_total);
-
+    this.quantity = ko.observable(data.quantity);
     this.created_at = ko.observable(data.created_at);
     this.updated_at = ko.observable(data.updated_at);
 }
@@ -70,6 +70,7 @@ function Transaction(data) {
 
   // fields for each individual transaction to add items to it.
   this.tiDescription = ko.observable();
+  this.tiQuantity = ko.observable(1);
   this.tiGrandTotal = ko.observable("0.00");
   this.tiDiscountTotal = ko.observable("0.00");
   this.tiTaxTotal = ko.observable("0.00");
@@ -329,8 +330,9 @@ function TransactionViewModel() {
         {
           description: transaction.tiDescription,
           grand_total: transaction.tiGrandTotal,
-          discount_total: transaction.discount_total,
-          tax_total: transaction.tax_total,
+          discount_total: transaction.tiDiscountTotal,
+          tax_total: transaction.tiTaxTotal,
+          quantity: transaction.tiQuantity,
           transaction_id: transaction.id
         }
       );
@@ -371,6 +373,7 @@ function TransactionViewModel() {
             transactionItem.description(data.transaction_item.description);
             transactionItem.created_at(data.transaction_item.created_at);
             transactionItem.updated_at(data.transaction_item.updated_at);
+            transactionItem.quantity(data.transaction_item.quantity);
             transactionItem.transaction_id(data.transaction_item.transaction_id);
           }
           // check what type of operation we wanted
@@ -391,6 +394,7 @@ function TransactionViewModel() {
       transaction.tiGrandTotal("0.00");
       transaction.tiDiscountTotal("0.00");
       transaction.tiTaxTotal("0.00");
+      transaction.tiQuantity(1);
     }
   };
 
