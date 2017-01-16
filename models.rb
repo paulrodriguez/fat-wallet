@@ -45,7 +45,7 @@ class TransactionItem
   property :tax_total, Float, :required=>false
   property :created_at, DateTime
   property :updated_at, DateTime
-
+	property :quantity, Integer, :required=>true, :default=>1
   belongs_to :transaction
 end
 

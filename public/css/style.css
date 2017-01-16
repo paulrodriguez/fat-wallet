@@ -20,13 +20,42 @@
 }
 
 .transaction-item-container {
-  padding:10px;
-  border-radius: 16px;
-  border: 1px solid black;
+  padding:10px 0;
+  display:inline-block;
+}
+
+.transaction-item-collection {
+  padding: 18px 0;
+}
+
+.header-4 {
+    font-size: 1.5em;
+    font-weight: 600;
+    margin: 1em 0;
+}
+
+.transaction-item-row {
+    padding:28px 0;
+    display:inline-block;
+    width:100%;
+}
+
+.transaction-item-row.odd {
+  background: #CCC;
+}
+.transaction-item-row.even {
+  background: #f5ff9b;
+}
+
+.new-transaction-item {
+  padding: 0 15px;
 }
 
 @media only screen and (min-width:767px) {
   .right-border {
     border: 1px solid #7f8082;
+  }
+  .transaction-item-container {
+    border-left: 1px solid #ccc;
   }
 }
