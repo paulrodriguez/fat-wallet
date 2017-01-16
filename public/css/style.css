@@ -10,3 +10,23 @@
 .btn {
   margin:19px 0;
 }
+
+.no-display{display:none}
+
+.vcenter {
+  display:inline-block;
+  vertical-align: middle;
+  float:none;
+}
+
+.transaction-item-container {
+  padding:10px;
+  border-radius: 16px;
+  border: 1px solid black;
+}
+
+@media only screen and (min-width:767px) {
+  .right-border {
+    border: 1px solid #7f8082;
+  }
+}

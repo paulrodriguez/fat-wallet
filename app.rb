@@ -228,7 +228,7 @@ post '/transaction_items.json' do
     if @transactionItem.save
       {:transaction_item=>@transactionItem,:status=>"success",:method=>"add"}.to_json
     else
-      {:transaction_item=>@transactionItem,:status=>"failure"}.to_json
+      {:errors=>@transactionItem.errors.full_messages,:transaction_item=>@transactionItem,:status=>"failure"}.to_json
     end
   end
 end
@@ -247,7 +247,7 @@ put '/transaction_items.json' do
     if @transaction_item.save
       {:transaction_item=>@transaction_item,:status=>"success"}.to_json
     else
-      {:status=>"failure"}.to_json
+      {:errors=>@transactionItem.errors.full_messages,:status=>"failure"}.to_json
     end
   end
 end
@@ -279,7 +279,7 @@ post '/transactions.json' do
   if @transaction.save
     {:transaction=>@transaction,:status=>"success"}.to_json
   else
-    {:ttransaction=>@transaction,:status=>"failure"}.to_json
+    {:errors=>@transaction.errors.full_messages,:transaction=>@transaction,:status=>"failure"}.to_json
   end
 end
 
@@ -298,7 +298,7 @@ put '/transactions.json' do
       if @transaction.save
         {:transaction=>@transaction,:status=>"success"}.to_json
       else
-        {:ttransaction=>@transaction,:status=>"failure"}.to_json
+        {:errors=>@transaction.errors.full_messages,:transaction=>@transaction,:status=>"failure"}.to_json
       end
     end
 end

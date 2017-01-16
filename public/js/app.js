@@ -24,7 +24,12 @@ ko.bindingHandlers.formatDate = {
             value = arr2[1]+"/"+arr2[2]+"/"+arr2[0];
           }
         }
-        $(element).text(value);
+
+        if(element.tagName=="INPUT") {
+          $(element).val(value);
+        } else {
+          $(element).text(value);
+        }
     }
 };
 
@@ -68,6 +73,8 @@ function Transaction(data) {
   this.tiGrandTotal = ko.observable("0.00");
   this.tiDiscountTotal = ko.observable("0.00");
   this.tiTaxTotal = ko.observable("0.00");
+
+  this.toggle_transaction_items = ko.observable(false);
 };
 
 function CurrentWeek() {
@@ -75,6 +82,12 @@ function CurrentWeek() {
   this.current_week_start = ko.observable();
   this.current_week_end = ko.observable();
   this.full_week = ko.observable();
+}
+
+function CurrentMonth() {
+  this.current_year = ko.observable();
+  this.current_month = ko.observable();
+  this.months_from_current_date = ko.observable(0);
 }
 
 function WeeklyGoal() {
@@ -224,8 +237,8 @@ function TransactionViewModel() {
 
     // builds new transaction item from fields and sends ajax request to save into backend model
     t.addTransaction = function() {
-      console.log("submitted unsing neter key");
-      return;
+      //console.log("submitted unsing neter key");
+      //return;
         var newTransaction = new Transaction({
           description: this.newTransactionDescription(),
           grand_total: this.newTransactionGrandTotal(),
@@ -245,8 +258,10 @@ function TransactionViewModel() {
         return true;
     };
 
-    t.testTransaction = function(transaction) {
-      console.log(transaction);
+    t.testTransaction = function(d,e) {
+      //console.log(transaction);
+      console.log(d);
+      console.log(e);
     }
 
     t.deleteTransaction = function(transaction) {
@@ -285,14 +300,30 @@ function TransactionViewModel() {
       });
     };
 
-    t.getTransactionItems = function(transaction) {
+
+
+    /****
+    * Methods for Transaction Items
+    ****/
+    t.toggleDisplayTransactionItems = function(transaction) {
+      console.log(transaction);
+      var toggleVal = ko.unwrap(transaction.toggle_transaction_items());
+      toggleVal = !toggleVal;
+      transaction.toggle_transaction_items(toggleVal);
+    }
+
+    /*t.getTransactionItems = function(transaction) {
       $.getJSON("/transaction_items.json",{transaction_id: transaction.id}, function(raw) {
           //var transactions = $.map(raw.transactions, function(item) { return new Transaction(item) });
           //t.transactions(transactions);
       });
-    };
+    };*/
 
-    t.addTransactionItem = function(transaction) {
+    t.addTransactionItem = function(transaction,event) {
+      if(event.keyCode!=13) {
+        return;
+      }
+      //console.log(transaction);return;
       // create new transaction item
       var newTransactionItem = new TransactionItem(
         {
@@ -307,7 +338,11 @@ function TransactionViewModel() {
       t.reserTransactionItemFields(transaction);
     };
 
-    t.updateTransactionItem = function(transactionItem) {
+    t.updateTransactionItem = function(transactionItem,event) {
+      if(event.keyCode!=13) {
+        return;
+      }
+      console.log("saving");
       transactionItem._method = "put";
       t.saveTransactionItem(transactionItem);
       return true;
@@ -318,6 +353,8 @@ function TransactionViewModel() {
       t.saveTransactionItem(data.transaction_item, data.transaction);
     };
 
+    // sends request to api for add, update and delete
+    // and takes appropriate measures to handle response depending on what operation we originally issued
     t.saveTransactionItem = function(transactionItem,transaction) {
       var jsonData = ko.toJS(transactionItem);
       $.ajax({
@@ -336,7 +373,7 @@ function TransactionViewModel() {
             transactionItem.updated_at(data.transaction_item.updated_at);
             transactionItem.transaction_id(data.transaction_item.transaction_id);
           }
-          // add to array of corresponding transaction
+          // check what type of operation we wanted
           if(data.method!==undefined) {
             if(data.method=="add") {
               transaction.transaction_items.push(transactionItem);
