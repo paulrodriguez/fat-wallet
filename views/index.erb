@@ -1,21 +1,22 @@
   <section>
     <div class="container-fluid">
       <div class="row">
+        <div class="col-xs-12">View By <span data-bind="{css:{'current-view':(viewBy()=='week')},click:toggleWeek}">Week</span> | <span data-bind="{css:{'current-view':(viewBy()=='month')},click:toggleMonth}">Month</span></div>
         <div class="col-xs-12">
-          <p><strong>Current Week:</strong><br>
+          <p><strong>Current Week:</strong>
+          <span class="glyphicon glyphicon-chevron-left cursor" data-bind="click:getDifferentWeek.bind($data,{days_to_add:-7})"></span>
+          <span data-bind="text: current_week.full_week"><%= @weekStart.strftime("%m/%d/%Y")%> - <%= @weekEnd.strftime("%m/%d/%Y")%></span>
+          <span class="glyphicon glyphicon-chevron-right cursor" data-bind="click:getDifferentWeek.bind($data,{days_to_add:7})"></span><br />
 
           <p>Week's Goal Limit: <input type="text" data-bind="value: weeklyGoal.limit_amount, event:{change:saveCurrentWeeklyGoal.bind($data,weeklyGoal)}" /></p>
 
-          <span class="glyphicon glyphicon-chevron-left" data-bind="click:getDifferentWeek.bind($data,{days_to_add:-7})"></span>
-          <span data-bind="text: current_week.full_week"><%= @weekStart.strftime("%m/%d/%Y")%> - <%= @weekEnd.strftime("%m/%d/%Y")%></span>
-          <span class="glyphicon glyphicon-chevron-right" data-bind="click:getDifferentWeek.bind($data,{days_to_add:7})"></span>
         </p>
         </div>
       </div>
       <div class="row">
         <div class="col-xs-12">
           <p><strong>Total Spent:</strong> <span data-bind="text: combinedTotal"></span></p>
-          <p><strong>Available:</strong> <span data-bind="text:availableLimit"></span></p>
+          <p><strong>Available:</strong> <span data-bind="{text:availableLimit,css: {'alert-danger':(availableLimit()<0)}}"></span></p>
         </div>
       </div>
 
@@ -61,23 +62,23 @@
       <div class="col-sm-6">
           <div class="col-sm-12">
             <label>Description</label>
-            <input class="form-control" type="text" data-bind="textInput: transaction.description" />
+            <input class="form-control" type="text" data-bind="{textInput: transaction.description,event:{keyup:$root.updateTransaction}}" />
           </div>
           <div class="col-sm-6">
               <label>Grand Total</label>
-            <input class="form-control" type="text" data-bind="textInput: transaction.grand_total" />
+            <input class="form-control" type="text" data-bind="{textInput: transaction.grand_total,event:{keyup:$root.updateTransaction}}" />
           </div>
           <div class="col-sm-6">
               <label>Discount Total</label>
-            <input class="form-control" type="text" data-bind="textInput: transaction.discount_total" />
+            <input class="form-control" type="text" data-bind="{textInput: transaction.discount_total,event:{keyup:$root.updateTransaction}}" />
           </div>
           <div class="col-sm-6">
             <label>Tax Total</label>
-            <input class="form-control" type="text" data-bind="textInput: transaction.tax_total" />
+            <input class="form-control" type="text" data-bind="{textInput: transaction.tax_total,event:{keyup:$root.updateTransaction}}" />
           </div>
           <div class="col-sm-6">
             <label>Transaction Date</label>
-            <input class="form-control" type="text" data-provide="datepicker" data-date-format="mm/dd/yyyy" data-bind="formatDate: transaction.transaction_date" />
+            <input class="form-control" type="text" data-provide="datepicker" data-date-format="mm/dd/yyyy" data-bind="{formatDate: transaction.transaction_date,event:{keyup:$root.updateTransaction}}" />
           </div>
           <div class="col-sm-12">
             <button class="btn btn-info"

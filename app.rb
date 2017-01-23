@@ -13,16 +13,7 @@ module CurrentWeek
     @currDate = Date.today
     @currWeekDate = @currDate-@currDate.cwday+day+getDaysFromCurrentDate
   end
-  def getCurrentMonth
-    @currDate = Date.today.prev_month(getMonthsToAdd)
-  end
-  def getMonthsToAdd
-    if !session[:months_to_add].nil?
-      session[:months_to_add].to_i
-    else
-      0
-    end
-  end
+
   def getDaysFromCurrentDate
     if !session[:days_from_current_date].nil?
       session[:days_from_current_date].to_i
@@ -34,9 +25,41 @@ module CurrentWeek
   def setDaysFromCurrentDate(days_to_add)
     session[:days_from_current_date] = days_to_add
   end
-
 end
-helpers CurrentWeek
+
+module CurrentMonth
+    def getCurrentMonth
+        @currentMonth = Date.today.next_month(getMonthsFromCurrentDate)
+    end
+
+    def getCurrentMonthStartDate
+        @curr_month = getCurrentMonth
+        @start_date = Date.civil(@curr_month.year,@curr_month.month,1)
+        @start_date
+    end
+
+    def getCurrentMonthEndDate
+        @curr_motnh = getCurrentMonth
+        @end_date = getCurrentMonthStartDate.next_month-1
+        @end_date
+    end
+
+    def getMonthsFromCurrentDate
+        if !sessions[:months_to_add].nil?
+            sessions[:months_to_add].to_i
+        else
+            0
+        end
+    end
+
+    def setMonthsFromCurrentDate(months_to_add)
+        session[:months_to_add] = months_to_add
+    end
+end
+
+
+helpers CurrentWeek,CurrentMonth
+
 enable :sessions
 
 #for all routes except '/login' check if session with username is
@@ -57,6 +80,10 @@ end
 before %r{.+\.json$} do
     content_type 'application/json'
 end
+
+##############################################
+### LOGIN INFORMATION
+#############################################
 get '/logout' do
   if !session[:username].nil?
     session.destroy
@@ -111,6 +138,11 @@ post '/register' do
   redirect "/login"
 end
 
+
+####################################################
+### LOGIN INFORMATION
+###################################################
+
 get '/' do
 	content_type 'html'
   @script = "js/app.js"
@@ -129,6 +161,18 @@ end
 
 put '/account.json' do
   {:p=>params}.to_json
+end
+
+get '/month_dates.json' do
+    @currMonthStart = getCurrMonthStartDate
+    @currMonthEnd = getCurrMonthEndDate
+    {:month_start=>@currMonthStart, :month_end=>@currMonthEnd,:months_from_current_date=>getMonthsFromCurrentDate}.to_json
+end
+
+post '/months_to_add.json' do
+    if(params[:months_to_add])
+        months_from_current_date = getMonthsFromCurrentDate+params[:months_to_add].to_i
+    end
 end
 
 get '/week_dates.json' do
@@ -316,4 +360,12 @@ end
 
 get '/getdate' do
 	{:date=>DateTime.now}.to_json
+end
+
+get '/test' do
+    @prev_month = Date.today.next_month(-12)
+    @next_month = Date.civil(@prev_month.year,@prev_month.month,1).next_month-1
+    @start_month_date = Date.civil(@prev_month.year,@prev_month.month,1).to_s
+    @end_month_date = Date.civil(@next_month.year,@next_month.month,@next_month.day).to_s
+    @start_month_date+ "--"+@end_month_date
 end

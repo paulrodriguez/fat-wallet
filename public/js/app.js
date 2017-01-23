@@ -119,6 +119,7 @@ function TransactionViewModel() {
     t.newTransactionDate = ko.observable();
 
     t.weeklyGoal = new WeeklyGoal();//ko.observable(100.00);
+    t.viewBy = ko.observable("week");
 
     // get transactions
     t.loadTransactions = function() {
@@ -189,6 +190,7 @@ function TransactionViewModel() {
     t.loadCurrentWeekInfo();
     t.loadCurrentWeeklyGoal();
 
+    // get week info
     t.setCurrentWeek = function(data) {
       this.days_from_current_date(data.days_from_current_date);
       this.current_week_start(data.current_week_start);
@@ -209,6 +211,22 @@ function TransactionViewModel() {
 
     };
 
+    t.toggleWeek = function() {
+        if(t.viewBy=='week') {
+            return;
+        }
+        t.viewBy('week');
+    };
+
+    t.toggleMonth = function() {
+    console.log("toggle month");
+        if(t.viewBy=='month') {
+            return;
+        }
+
+        t.viewBy('month');
+    };
+
     t.reloadTransactions = function() {
       t.transactions.removeAll();
       t.loadTransactions();
@@ -222,7 +240,7 @@ function TransactionViewModel() {
         for(var p =0; p < this.transactions().length; p++) {
           // skip any destroyed items in observable array
           if(this.transactions()[p]._destroy!==undefined && this.transactions()[p]._destroy==true) {continue;}
-          total += this.transactions()[p].grand_total();
+          total += Number.parseFloat(this.transactions()[p].grand_total());
         }
         return Number.parseFloat(total).toFixed(2);
       },
@@ -238,6 +256,7 @@ function TransactionViewModel() {
 
     // builds new transaction item from fields and sends ajax request to save into backend model
     t.addTransaction = function() {
+
       //console.log("submitted unsing neter key");
       //return;
         var newTransaction = new Transaction({
@@ -253,7 +272,9 @@ function TransactionViewModel() {
         t.resetFormFields();
     };
 
-    t.updateTransaction = function(transaction) {
+    t.updateTransaction = function(transaction,event) {
+        if(event.keyCode!=13) {return;}
+        //console.log(transaction);console.log(event);return;
         transaction._method = "put";
         t.saveTransaction(transaction);
         return true;
