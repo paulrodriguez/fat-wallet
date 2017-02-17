@@ -59,7 +59,7 @@ function Transaction(data) {
   this.grand_total    = ko.observable(Number.parseFloat(data.grand_total));
   this.tax_total      = ko.observable(Number.parseFloat(data.tax_total));
   this.discount_total = ko.observable(Number.parseFloat(data.discount_total));
-
+  this.tax_rate       = ko.observable(Number.parseFloat(data.tax_rate));
   // date information
   this.transaction_date = ko.observable(data.transaction_date);
   this.created_at       = ko.observable(data.created_at);
@@ -78,6 +78,14 @@ function Transaction(data) {
   this.toggle_transaction_items = ko.observable(false);
 };
 
+function DatesViewing() {
+  this.start_date = ko.observable();
+  this.end_date = ko.observable();
+  this.date_view_type = ko.observable();
+  this.date_counter = ko.observable(0);
+  this.limit_amount = ko.observable(0);
+  this.date_range = ko.observable();
+}
 function CurrentWeek() {
   this.days_from_current_date = ko.observable(0);
   this.current_week_start = ko.observable();
@@ -116,10 +124,14 @@ function TransactionViewModel() {
     t.newTransactionGrandTotal = ko.observable();
     t.newTransactionDiscountTotal = ko.observable("0.00");
     t.newTransactionTaxTotal = ko.observable("0.00");
+    t.newTransactionTaxRate = ko.observable("0.00");
     t.newTransactionDate = ko.observable();
 
-    t.weeklyGoal = new WeeklyGoal();//ko.observable(100.00);
-    t.viewBy = ko.observable("week");
+
+    t.datesViewing = new DatesViewing();
+    t.datesViewing.date_view_type('week');
+    //t.weeklyGoal = new WeeklyGoal();//ko.observable(100.00);
+    //t.viewBy = ko.observable("week");
 
     // get transactions
     t.loadTransactions = function() {
@@ -137,16 +149,61 @@ function TransactionViewModel() {
 
             return new Transaction(item);
           }); // $.map
-
+          console.log(transactions);
           t.transactions(transactions);
       }); // end $.getJSON
     };
 
-    t.loadCurrentWeekInfo = function() {
+    // pull the dates we are currently viewing
+    t.loadViewDate = function() {
+      $.getJSON("/view_dates.json",function(raw) {
+        t.setViewDate.call(t.datesViewing,raw);
+      });
+    }
+
+    t.setViewDate = function(data) {
+      this.date_range(data.date_range);
+      this.start_date(data.start_date);
+      this.end_date(data.end_date);
+      this.date_view_type(data.date_view_type);
+      this.date_counter(data.date_counter);
+    }
+
+    t.updateViewDate = function(data) {
+      $.ajax({
+           url: "/view_dates.json",
+           type: "POST",
+           data: data
+      }).done(function(res){
+          t.setViewDate.call(t.datesViewing,res);
+          t.reloadTransactions();
+          //t.loadCurrentWeeklyGoal();
+      });
+
+    };
+
+    t.toggleView = function(data) {
+      console.log(data);
+      t.datesViewing.date_view_type(data.type);
+      t.updateViewDate(ko.toJS(t.datesViewing));
+    }
+
+    //t.set
+
+    /*t.loadCurrentWeekInfo = function() {
       $.getJSON("/week_dates.json",function(raw){
         t.setCurrentWeek.call(t.current_week,raw);
       });
     };
+
+    // get week info
+    t.setCurrentWeek = function(data) {
+      this.days_from_current_date(data.days_from_current_date);
+      this.current_week_start(data.current_week_start);
+      this.current_week_end(data.current_week_end);
+      this.full_week(data.full_week);
+    }
+    */
 
     t.loadCurrentWeeklyGoal = function() {
         $.getJSON("/weekly_goals.json",function(raw){
@@ -187,16 +244,10 @@ function TransactionViewModel() {
 
     // load info for the first time
     t.loadTransactions();
-    t.loadCurrentWeekInfo();
-    t.loadCurrentWeeklyGoal();
+    t.loadViewDate();
+    //t.loadCurrentWeeklyGoal();
 
-    // get week info
-    t.setCurrentWeek = function(data) {
-      this.days_from_current_date(data.days_from_current_date);
-      this.current_week_start(data.current_week_start);
-      this.current_week_end(data.current_week_end);
-      this.full_week(data.full_week);
-    }
+
 
     t.getDifferentWeek = function(data) {
       $.ajax({
@@ -250,7 +301,7 @@ function TransactionViewModel() {
     t.availableLimit = ko.pureComputed({
       owner: t,
       read: function() {
-        return (this.weeklyGoal.limit_amount() - this.combinedTotal()).toFixed(2);
+        return (this.datesViewing.limit_amount() - this.combinedTotal()).toFixed(2);
       }
     });
 
@@ -262,12 +313,13 @@ function TransactionViewModel() {
         var newTransaction = new Transaction({
           description: this.newTransactionDescription(),
           grand_total: this.newTransactionGrandTotal(),
-          tax_total: this.newTransactionDiscountTotal(),
-          discount_total: this.newTransactionTaxTotal(),
+          tax_total: this.newTransactionTaxTotal(),
+          tax_rate: this.newTransactionTaxRate(),
+          discount_total: this.newTransactionDiscountTotal(),
           transaction_date: this.newTransactionDate()
         });
 
-        t.transactions.push(newTransaction);
+        //t.transactions.push(newTransaction);
         t.saveTransaction(newTransaction);
         t.resetFormFields();
     };
@@ -295,8 +347,9 @@ function TransactionViewModel() {
     t.resetFormFields = function() {
       this.newTransactionDescription("");
       this.newTransactionGrandTotal("");
-      this.newTransactionDiscountTotal("");
-      this.newTransactionTaxTotal("");
+      this.newTransactionDiscountTotal("0.00");
+      this.newTransactionTaxTotal("0.00");
+      this.newTransactionTaxRate("0.00");
       this.newTransactionDate("");
     };
     t.setCurrentWeeklyGoal = function(data) {
@@ -313,11 +366,20 @@ function TransactionViewModel() {
            type: "POST",
            data: myData
       }).done(function(data){
-          if(data.transaction!==undefined){
+          if(data.transaction!==undefined && data.status!="failure"){
+            if(data.type!==undefined && data.type=="new") {
+              t.transactions.push(transaction);
+            }
             transaction.id(data.transaction.id);
             transaction.transaction_date(data.transaction.transaction_date);
             transaction.created_at(data.transaction.created_at);
             transaction.updated_at(data.transaction.updated_at);
+          } else if(data.errors!==undefined) {
+            var errors = "";
+            for(var i=0; i < data.errors.length;i++) {
+              errors += data.errors[i]+"<br />";
+            }
+            alert(errors);
           }
       });
     };

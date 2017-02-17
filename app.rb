@@ -13,7 +13,16 @@ module CurrentWeek
     @currDate = Date.today
     @currWeekDate = @currDate-@currDate.cwday+day+getDaysFromCurrentDate
   end
-
+  #gets the date of the monday of the current week we are viewing
+  def getStartWeekDate(counter=0)
+    @currDate = Date.today
+    @date = @currDate-@currDate.cwday+1+(counter*7)
+  end
+  #gets the date of the Sunday of the current week we are viewing
+  def getEndWeekDate(counter=0)
+    @currDate = Date.today
+    @date = @currDate-@currDate.cwday+7+(counter*7)
+  end
   def getDaysFromCurrentDate
     if !session[:days_from_current_date].nil?
       session[:days_from_current_date].to_i
@@ -28,19 +37,19 @@ module CurrentWeek
 end
 
 module CurrentMonth
-    def getCurrentMonth
-        @currentMonth = Date.today.next_month(getMonthsFromCurrentDate)
+    def getCurrentMonth(counter)
+        @currentMonth = Date.today.next_month(counter)
     end
 
-    def getCurrentMonthStartDate
-        @curr_month = getCurrentMonth
+    def getCurrentMonthStartDate(counter=0)
+        @curr_month = getCurrentMonth(counter)
         @start_date = Date.civil(@curr_month.year,@curr_month.month,1)
         @start_date
     end
 
-    def getCurrentMonthEndDate
-        @curr_motnh = getCurrentMonth
-        @end_date = getCurrentMonthStartDate.next_month-1
+    def getCurrentMonthEndDate(counter=0)
+        @curr_motnh = getCurrentMonth(counter)
+        @end_date = getCurrentMonthStartDate(counter).next_month-1
         @end_date
     end
 
@@ -57,8 +66,52 @@ module CurrentMonth
     end
 end
 
+module ViewTypeDate
+  def getViewTypeDate
+    if !session[:view_type].nil?
+      session[:view_type]
+    else
+      'week'
+    end
+  end
 
-helpers CurrentWeek,CurrentMonth
+  def setViewTypeDate(view_type='week')
+    session[:view_type] = view_type
+  end
+
+  def getDateCounter
+    if !session[:date_counter].nil?
+      session[:date_counter].to_i
+    else
+      0
+    end
+  end
+
+  def setDateCounter(counter=0)
+    session[:date_counter] = counter
+  end
+
+  def getStartDate
+    if self.getViewTypeDate=='week'
+      return getStartWeekDate(getDateCounter)
+    elsif self.getViewTypeDate=='month'
+      return getCurrentMonthStartDate(getDateCounter)
+    end
+    return Date.today
+  end
+
+  def getEndDate
+    if self.getViewTypeDate=='week'
+      return getEndWeekDate(getDateCounter)
+    elsif self.getViewTypeDate=='month'
+      return getCurrentMonthEndDate(getDateCounter)
+    end
+    return Date.today
+  end
+end
+
+
+helpers CurrentWeek,CurrentMonth,ViewTypeDate
 
 enable :sessions
 
@@ -147,8 +200,8 @@ get '/' do
 	content_type 'html'
   @script = "js/app.js"
   @currDate = Date.today
-  @weekStart = getWeekDate(1)
-  @weekEnd = getWeekDate(7)
+  @weekStart = getStartDate
+  @weekEnd = getEndDate
 	erb :index, :layout=>:"layouts/main"
 
 end
@@ -163,6 +216,11 @@ put '/account.json' do
   {:p=>params}.to_json
 end
 
+get '/date_range.json' do
+
+
+end
+
 get '/month_dates.json' do
     @currMonthStart = getCurrMonthStartDate
     @currMonthEnd = getCurrMonthEndDate
@@ -175,26 +233,28 @@ post '/months_to_add.json' do
     end
 end
 
-get '/week_dates.json' do
-  @currWeekDateStart = getWeekDate(1)
-  @currWeekDateEnd = getWeekDate(7)
-  {:full_week=>@currWeekDateStart.strftime("%m/%d/%Y")+" - "+@currWeekDateEnd.strftime("%m/%d/%Y"),
-  :current_week_start=>@currWeekDateStart,:current_week_end=>@currWeekDateEnd,
-  :days_from_current_date=>getDaysFromCurrentDate}.to_json
-end
-
-post '/week_dates.json' do
-  if(params[:days_to_add])
-    days_from_current_date = getDaysFromCurrentDate+params[:days_to_add].to_i
-    setDaysFromCurrentDate(days_from_current_date)
-  end
-
-  @currWeekDateStart = getWeekDate(1)
-  @currWeekDateEnd = getWeekDate(7)
-  {:full_week=>@currWeekDateStart.strftime("%m/%d/%Y")+" - "+@currWeekDateEnd.strftime("%m/%d/%Y"),
-  :current_week_start=>@currWeekDateStart,:current_week_end=>@currWeekDateEnd,
-  :days_from_current_date=>getDaysFromCurrentDate}.to_json
-end
+# get '/week_dates.json' do
+#   @startDate = getStartDate
+#   @endDate = getEndDate
+#   {:date_range=>@startDate.strftime("%m/%d/%Y")+" - "+@endDate.strftime("%m/%d/%Y"),
+#   :start_date=>@startDate,:end_date=>@endDate,
+#   :date_counter=>getDateCounter}.to_json
+# end
+#
+#
+#
+# post '/week_dates.json' do
+#   if(params[:date_counter])
+#     counter = getDateCounter+params[:date_counter].to_i
+#     setDateCounter(counter)
+#   end
+#
+#   @currWeekDateStart = getWeekDate(1)
+#   @currWeekDateEnd = getWeekDate(7)
+#   {:full_week=>@currWeekDateStart.strftime("%m/%d/%Y")+" - "+@currWeekDateEnd.strftime("%m/%d/%Y"),
+#   :current_week_start=>@currWeekDateStart,:current_week_end=>@currWeekDateEnd,
+#   :days_from_current_date=>getDaysFromCurrentDate}.to_json
+# end
 
 get '/weekly_goals.json' do
   @weekly_goal = WeeklyGoal.first(:user_id=>session[:user_id],:start_date.gte=>getWeekDate(1),:end_date.lte=>getWeekDate(7))
@@ -234,18 +294,118 @@ put '/weekly_goals.json' do
   end
 end
 
+
+
+
+
+################################################
+# START VIEW DATES API
+################################################
+get '/view_dates.json' do
+  #get start and end dates
+  @startDate = getStartDate
+  @endDate = getEndDate
+  #return json response with the date range, counter and other stuff
+  {:date_range=>@startDate.strftime("%m/%d/%Y")+" - "+@endDate.strftime("%m/%d/%Y"),
+  :start_date=>@startDate,:end_date=>@endDate,
+  :date_counter=>getDateCounter,:date_view_type=>getViewTypeDate}.to_json
+end
+
+
+post '/view_dates.json' do
+  if(params[:date_counter])
+    days_from_current_date = getDateCounter+params[:date_counter].to_i
+    setDateCounter(days_from_current_date)
+  end
+  if(params[:date_view_type])
+    setViewTypeDate(params[:date_view_type])
+  end
+
+  #get start and end dates
+  @startDate = getStartDate
+  @endDate = getEndDate
+  #return json response with the date range, counter and other stuff
+  {:date_range=>@startDate.strftime("%m/%d/%Y")+" - "+@endDate.strftime("%m/%d/%Y"),
+  :start_date=>@startDate,:end_date=>@endDate,
+  :date_counter=>getDateCounter,:date_view_type=>getViewTypeDate}.to_json
+end
+
+################################################
+# END VIEW DATES API
+################################################
+
+
+
+################################################
+# START transactions API
+################################################
 get '/transactions.json' do
-  @currWeekDateStart = getWeekDate(1)
-  @currWeekDateEnd = getWeekDate(7)
-	@transactions = Transaction.all(:transaction_date.gte=>@currWeekDateStart,:transaction_date.lte=>@currWeekDateEnd,:user_id=>session[:user_id])
+  @startDate = getStartDate
+  @endDate = getEndDate
+	@transactions = Transaction.all(:transaction_date.gte=>@startDate,:transaction_date.lte=>@endDate,:user_id=>session[:user_id])
   @transaction_items = Hash.new
   @transactions.each do |t|
     @transaction_items[t.id] = t.transactionItems
   end
   #@transactionItems = TransactionItem.all()
-  {:transactions=>@transactions,:transaction_items=>@transaction_items}.to_json
+  {:transactions=>@transactions,:transaction_items=>@transaction_items,
+    :start_date=>@startDate,:end_date=>@endDate}.to_json
 	#@transactions.to_json
 end
+
+post '/transactions.json' do
+  @transaction = Transaction.new
+  @transaction.description = params[:description]
+  @transaction.grand_total = params[:grand_total]
+  @transaction.discount_total = params[:discount_total]
+  @transaction.tax_total = params[:tax_total]
+  @transaction.tax_rate = params[:tax_rate]
+  @transaction.transaction_date = Date.strptime(params[:transaction_date], "%m/%d/%Y").to_datetime
+  @transaction.created_at = DateTime.now
+  @transaction.updated_at = DateTime.now
+  @transaction.user_id    = session[:user_id]
+
+  if @transaction.save
+    {:transaction=>@transaction,:status=>"success",:type=>"new"}.to_json
+  else
+    {:errors=>@transaction.errors.full_messages,:transaction=>@transaction,:status=>"failure"}.to_json
+  end
+end
+
+put '/transactions.json' do
+    @transaction = Transaction.get(params[:id])
+    if @transaction.nil?
+      {:status=>"failure"}.to_json
+    else
+      @transaction.description = params[:description]
+      @transaction.grand_total = params[:grand_total]
+      @transaction.discount_total = params[:discount_total]
+      @transaction.tax_total = params[:tax_total]
+      @transaction.tax_rate = params[:tax_rate]
+      @transaction.transaction_date = DateTime.parse(params[:transaction_date])
+      @transaction.updated_at = DateTime.now
+
+      if @transaction.save
+        {:transaction=>@transaction,:status=>"success",:type=>'update'}.to_json
+      else
+        {:errors=>@transaction.errors.full_messages,:transaction=>@transaction,:status=>"failure"}.to_json
+      end
+    end
+end
+
+delete '/transactions.json' do
+  @transaction = Transaction.get(params[:id])
+  if @transaction.destroy
+    {:status=>'success'}.to_json
+  else
+    {:status=>"failure"}.to_json
+  end
+end
+
+
+################################################
+# END transactions API
+################################################
 
 get '/transaction_items.json' do
   @transaction = Transaction.get(params[:transaction_id])
@@ -311,61 +471,18 @@ delete '/transaction_items.json' do
   end
 end
 
-post '/transactions.json' do
-  @transaction = Transaction.new
-  @transaction.description = params[:description]
-  @transaction.grand_total = params[:grand_total]
-  @transaction.discount_total = params[:discount_total]
-  @transaction.tax_total = params[:tax_total]
-  @transaction.transaction_date = Date.strptime(params[:transaction_date], "%m/%d/%Y").to_datetime
-  @transaction.created_at = DateTime.now
-  @transaction.updated_at = DateTime.now
-  @transaction.user_id    = session[:user_id]
 
-  if @transaction.save
-    {:transaction=>@transaction,:status=>"success"}.to_json
-  else
-    {:errors=>@transaction.errors.full_messages,:transaction=>@transaction,:status=>"failure"}.to_json
-  end
-end
-
-put '/transactions.json' do
-    @transaction = Transaction.get(params[:id])
-    if @transaction.nil?
-      {:status=>"failure"}.to_json
-    else
-      @transaction.description = params[:description]
-      @transaction.grand_total = params[:grand_total]
-      @transaction.discount_total = params[:discount_total]
-      @transaction.tax_total = params[:tax_total]
-      @transaction.transaction_date = DateTime.parse(params[:transaction_date])
-      @transaction.updated_at = DateTime.now
-
-      if @transaction.save
-        {:transaction=>@transaction,:status=>"success"}.to_json
-      else
-        {:errors=>@transaction.errors.full_messages,:transaction=>@transaction,:status=>"failure"}.to_json
-      end
-    end
-end
-
-delete '/transactions.json' do
-  @transaction = Transaction.get(params[:id])
-  if @transaction.destroy
-    {:status=>'success'}.to_json
-  else
-    {:status=>"failure"}.to_json
-  end
-end
 
 get '/getdate' do
 	{:date=>DateTime.now}.to_json
 end
 
 get '/test' do
-    @prev_month = Date.today.next_month(-12)
-    @next_month = Date.civil(@prev_month.year,@prev_month.month,1).next_month-1
-    @start_month_date = Date.civil(@prev_month.year,@prev_month.month,1).to_s
-    @end_month_date = Date.civil(@next_month.year,@next_month.month,@next_month.day).to_s
-    @start_month_date+ "--"+@end_month_date
+#     @prev_month = Date.today.next_month(-12)
+#     @next_month = Date.civil(@prev_month.year,@prev_month.month,1).next_month-1
+#     @start_month_date = Date.civil(@prev_month.year,@prev_month.month,1).to_s
+#     @end_month_date = Date.civil(@next_month.year,@next_month.month,@next_month.day).to_s
+#     @start_month_date+ "--"+@end_month_dat
+
+    self.getStartDate.to_s + " - "+self.getEndDate.to_s
 end

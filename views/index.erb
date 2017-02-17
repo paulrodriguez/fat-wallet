@@ -1,17 +1,15 @@
   <section>
     <div class="container-fluid">
       <div class="row">
-        <div class="col-xs-12">View By <span data-bind="{css:{'current-view':(viewBy()=='week')},click:toggleWeek}">Week</span> | <span data-bind="{css:{'current-view':(viewBy()=='month')},click:toggleMonth}">Month</span></div>
-        <div class="col-xs-12">
-          <p><strong>Current Week:</strong>
-          <span class="glyphicon glyphicon-chevron-left cursor" data-bind="click:getDifferentWeek.bind($data,{days_to_add:-7})"></span>
-          <span data-bind="text: current_week.full_week"><%= @weekStart.strftime("%m/%d/%Y")%> - <%= @weekEnd.strftime("%m/%d/%Y")%></span>
-          <span class="glyphicon glyphicon-chevron-right cursor" data-bind="click:getDifferentWeek.bind($data,{days_to_add:7})"></span><br />
-
-          <p>Week's Goal Limit: <input type="text" data-bind="value: weeklyGoal.limit_amount, event:{change:saveCurrentWeeklyGoal.bind($data,weeklyGoal)}" /></p>
-
-        </p>
-        </div>
+        <div class="col-xs-12">View By <span data-bind="{css:{'current-view':(datesViewing.date_view_type()=='week')},click:toggleView.bind($data,{type:'week'})}">Week</span> | <span data-bind="{css:{'current-view':(datesViewing.date_view_type()=='month')},click:toggleView.bind($data,{type:'month'})}">Month</span></div>
+          <div class="col-xs-12">
+            <p><strong>Current Dates:</strong>
+              <span class="glyphicon glyphicon-chevron-left cursor" data-bind="click:updateViewDate.bind($data,{date_counter:-1})"></span>
+              <span data-bind="text: datesViewing.date_range"><%= @weekStart.strftime("%m/%d/%Y")%> - <%= @weekEnd.strftime("%m/%d/%Y")%></span>
+              <span class="glyphicon glyphicon-chevron-right cursor" data-bind="click:updateViewDate.bind($data,{date_counter:1})"></span><br />
+              <!--<p>Spending Limit: <input type="text" data-bind="value: datesViewing.limit_amount, event:{change:saveCurrentWeeklyGoal.bind($data,weeklyGoal)}" /></p>-->
+            </p>
+          </div>
       </div>
       <div class="row">
         <div class="col-xs-12">
@@ -40,6 +38,10 @@
                 <div class=" col-sm-2">
                   <label for="newTransactionTaxTotal">Tax Total</label>
                   <input class="form-control" id="newTransactionTaxTotal" data-bind="value: newTransactionTaxTotal" placeholder="Tax Total">
+                </div>
+                <div class=" col-sm-2">
+                  <label for="newTransactionTaxTotal">Tax Rate (in percent)</label>
+                  <input class="form-control" id="newTransactionTaxRate" data-bind="value: newTransactionTaxRate" placeholder="Tax Rate">
                 </div>
                 <div class=" col-sm-2">
                   <label for="newTransactionDate">Transaction Date</label>
@@ -75,6 +77,10 @@
           <div class="col-sm-6">
             <label>Tax Total</label>
             <input class="form-control" type="text" data-bind="{textInput: transaction.tax_total,event:{keyup:$root.updateTransaction}}" />
+          </div>
+          <div class="col-sm-6">
+            <label>Tax Rate (in percent)</label>
+            <input class="form-control" type="text" data-bind="{textInput: transaction.tax_rate,event:{keyup:$root.updateTransaction}}" />
           </div>
           <div class="col-sm-6">
             <label>Transaction Date</label>
