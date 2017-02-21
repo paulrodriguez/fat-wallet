@@ -13,9 +13,22 @@
     return result;
 };*/
 
+function convertDateToString(date) {
+  var format_date = date;
+  var arr1 = format_date.split("T");
+  if(arr1.length) {
+    var arr2 = arr1[0].split("-");
+    if(arr2.length==3) {
+      format_date = arr2[1]+"/"+arr2[2]+"/"+arr2[0];
+    }
+  }
+
+  return format_date;
+}
 
 ko.bindingHandlers.formatDate = {
     init: function (element, valueAccessor, allBindingsAccessor) {
+        var val = valueAccessor();
         var value = ko.unwrap(valueAccessor());
         var arr1 = value.split("T");
         if(arr1.length) {
@@ -30,6 +43,33 @@ ko.bindingHandlers.formatDate = {
         } else {
           $(element).text(value);
         }
+
+        //ko.bindingHandlers.val.update(element,valueAccessor);
+        val(element.value);
+    },
+    update: function (element, valueAccessor, allBindingsAccessor) {
+        var val = valueAccessor();
+        console.log(val);
+        //ko.bindingHandlers.val.update(element,valueAccessor);
+
+        var value = ko.unwrap(valueAccessor());
+        var arr1 = value.split("T");
+        if(arr1.length) {
+          var arr2 = arr1[0].split("-");
+          if(arr2.length==3) {
+            value = arr2[1]+"/"+arr2[2]+"/"+arr2[0];
+          }
+        }
+
+        if(element.tagName=="INPUT") {
+          $(element).val(value);
+        } else {
+          $(element).text(value);
+        }
+
+        //ko.bindingHandlers.val.update(element,valueAccessor);
+        val(value);
+
     }
 };
 
@@ -61,7 +101,8 @@ function Transaction(data) {
   this.discount_total = ko.observable(Number.parseFloat(data.discount_total));
   this.tax_rate       = ko.observable(Number.parseFloat(data.tax_rate));
   // date information
-  this.transaction_date = ko.observable(data.transaction_date);
+  var transaction_date = convertDateToString(data.transaction_date);
+  this.transaction_date = ko.observable(transaction_date);
   this.created_at       = ko.observable(data.created_at);
   this.updated_at       = ko.observable(data.updated_at);
 
@@ -326,6 +367,7 @@ function TransactionViewModel() {
 
     t.updateTransaction = function(transaction,event) {
         if(event.keyCode!=13) {return;}
+        console.log(transaction);
         //console.log(transaction);console.log(event);return;
         transaction._method = "put";
         t.saveTransaction(transaction);
@@ -370,8 +412,10 @@ function TransactionViewModel() {
             if(data.type!==undefined && data.type=="new") {
               t.transactions.push(transaction);
             }
+            
             transaction.id(data.transaction.id);
-            transaction.transaction_date(data.transaction.transaction_date);
+            var transaction_date = convertDateToString(data.transaction.transaction_date);
+            transaction.transaction_date(transaction_date);
             transaction.created_at(data.transaction.created_at);
             transaction.updated_at(data.transaction.updated_at);
           } else if(data.errors!==undefined) {

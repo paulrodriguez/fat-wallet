@@ -319,6 +319,7 @@ post '/view_dates.json' do
   end
   if(params[:date_view_type])
     setViewTypeDate(params[:date_view_type])
+    setDateCounter(0)
   end
 
   #get start and end dates
@@ -382,7 +383,7 @@ put '/transactions.json' do
       @transaction.discount_total = params[:discount_total]
       @transaction.tax_total = params[:tax_total]
       @transaction.tax_rate = params[:tax_rate]
-      @transaction.transaction_date = DateTime.parse(params[:transaction_date])
+      @transaction.transaction_date = Date.strptime(params[:transaction_date], "%m/%d/%Y").to_datetime#DateTime.parse(params[:transaction_date])
       @transaction.updated_at = DateTime.now
 
       if @transaction.save

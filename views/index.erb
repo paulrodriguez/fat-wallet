@@ -84,7 +84,7 @@
           </div>
           <div class="col-sm-6">
             <label>Transaction Date</label>
-            <input class="form-control" type="text" data-provide="datepicker" data-date-format="mm/dd/yyyy" data-bind="{formatDate: transaction.transaction_date,event:{keyup:$root.updateTransaction}}" />
+            <input class="form-control" type="text" data-provide="datepicker" data-date-format="mm/dd/yyyy" data-bind="{textInput: transaction.transaction_date,event:{keyup:$root.updateTransaction}}" />
           </div>
           <div class="col-sm-12">
             <button class="btn btn-info"
