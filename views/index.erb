@@ -118,7 +118,7 @@
         </div>
         <div class="transaction-item-collection" data-bind="if:(transaction.toggle_transaction_items()==true)">
         <div class="col-xs-12 text-center header-4">Items Purchased</div>
-
+        <div>Total: <span data-bind="{text: transaction.transaction_items_total}"></span></div>
         <div data-bind="foreach: {data: transaction.transaction_items, as: 'transaction_item'}">
           <div class="transaction-item-row" data-bind="css:{'even': ($index() % 2==0),'odd':($index()%2==1)}">
             <div class="col-sm-10">

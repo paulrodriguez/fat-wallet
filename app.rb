@@ -343,7 +343,10 @@ end
 get '/transactions.json' do
   @startDate = getStartDate
   @endDate = getEndDate
-	@transactions = Transaction.all(:transaction_date.gte=>@startDate,:transaction_date.lte=>@endDate,:user_id=>session[:user_id])
+	@transactions = Transaction.all(:transaction_date.gte=>@startDate,
+                                  :transaction_date.lte=>@endDate,
+                                  :user_id=>session[:user_id],
+                                  :order=>[:transaction_date.desc])
   @transaction_items = Hash.new
   @transactions.each do |t|
     @transaction_items[t.id] = t.transactionItems

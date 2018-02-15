@@ -67,6 +67,10 @@ PLATFORMS
 
 DEPENDENCIES
   data_mapper
-  json
+  json (~> 1.4)
+  rack (< 2.0)
   sinatra
   sinatra-flash
+
+BUNDLED WITH
+   1.14.6

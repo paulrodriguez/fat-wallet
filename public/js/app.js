@@ -91,6 +91,7 @@ function TransactionItem(data) {
 
 // transaction model
 function Transaction(data) {
+  var self = this;
   this.id = ko.observable(data.id);
 
   this.description = ko.observable(data.description);
@@ -117,6 +118,16 @@ function Transaction(data) {
   this.tiTaxTotal = ko.observable("0.00");
 
   this.toggle_transaction_items = ko.observable(false);
+
+  this.transaction_items_total = ko.computed(function() {
+    var total = 0;
+    //console.log(self);
+    for(var i =0; i < self.transaction_items().length; i++) {
+      var item_total = self.transaction_items()[i].grand_total();
+      total += item_total;
+    }
+    return total;
+  });
 };
 
 function DatesViewing() {
@@ -412,7 +423,7 @@ function TransactionViewModel() {
             if(data.type!==undefined && data.type=="new") {
               t.transactions.push(transaction);
             }
-            
+
             transaction.id(data.transaction.id);
             var transaction_date = convertDateToString(data.transaction.transaction_date);
             transaction.transaction_date(transaction_date);
@@ -523,6 +534,15 @@ function TransactionViewModel() {
       transaction.tiTaxTotal("0.00");
       transaction.tiQuantity(1);
     }
+
+
+    t.transactionItemTotal = ko.computed({
+      read: function() {
+        console.log(this);
+        return "test";
+    },
+    deferEvaluation: true
+    });
   };
 
   // initialize ko.
