@@ -1,0 +1,17 @@
+version: "3"
+
+services:
+  ruby:
+    build:
+      context: .
+      dockerfile: .docker/Dockerfile.rails
+    image: ruby
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/usr/src/app/
+    working_dir: /usr/src/app/
+    environment:
+      - APP_PORT:5000
+      - APP_HOST:0.0.0.0
+    entrypoint: /bin/sh -c "shotgun config.ru -p$${APP_PORT} -o$${APP_HOST}"

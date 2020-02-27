@@ -1,0 +1,15 @@
+FROM ruby:2.7
+
+COPY . /usr/src/app/
+
+WORKDIR /usr/src/app
+
+RUN bundle install
+
+ENV \
+  APP_PORT="5000" \
+  APP_HOST="0.0.0.0"
+
+EXPOSE ${APP_PORT}
+
+CMD bundle exec shotgun /app/config.ru -p${APP_PORT} -o${APP_HOST}

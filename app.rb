@@ -1,11 +1,16 @@
 require 'sinatra'
 require 'sinatra/flash'
+require 'dm-sqlite-adapter'
 require 'dm-serializer'
 require 'digest/sha1'
 #require 'sinatra/base'
+require 'dotenv/load'
 require 'data_mapper'
 require File.dirname(__FILE__)+'/models.rb'
 require 'json'
+
+set :session_secret, "328479283uf923fu8932fu923uf9832f23f232"
+enable :sessions
 
 module CurrentWeek
   # 1=>Monday, 2=>Tuesday, 3=>Wednesday, 4=>Thursday, 5 => Friday, 6 => Saturday, 7=>Sunday
@@ -116,21 +121,21 @@ helpers CurrentWeek,CurrentMonth,ViewTypeDate
 enable :sessions
 
 #for all routes except '/login' check if session with username is
-before %r{^(?!(/login|/register)$)} do
-
+before %r{(?!(/login|/register))} do
+  puts session[:username]
   if session[:username].nil?
 		redirect '/login'
 	end
 end
 
 # if already logged in, then redirect to index page
-before %r{^/login$} do
+before %r{/login} do
   if !session[:username].nil?
     redirect '/'
   end
 end
 
-before %r{.+\.json$} do
+before %r{.+\.json} do
     content_type 'application/json'
 end
 
@@ -369,7 +374,7 @@ post '/transactions.json' do
   if @transaction.save
     {:transaction=>@transaction,:status=>"success",:type=>"new"}.to_json
   else
-    {:errors=>@transaction.errors.full_messages,:transaction=>@transaction,:status=>"failure"}.to_json
+    {:errors=>@transaction.errors.full_messages,:transaction=>@transaction,:status=>"failure",'user':session[:user_id]}.to_json
   end
 end
 
