@@ -4,6 +4,8 @@ COPY . /usr/src/app/
 
 WORKDIR /usr/src/app
 
+RUN gem install do_sqlite3 -v '0.10.17'
+
 RUN bundle install
 
 ENV \
