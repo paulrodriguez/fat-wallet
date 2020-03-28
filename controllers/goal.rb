@@ -1,3 +1,5 @@
+require_relative '../helpers/validate_login'
+
 class GoalController < Sinatra::Base
   helpers ViewTypeDate,CurrentWeek,CurrentMonth, ValidateLogin
 
@@ -6,7 +8,7 @@ class GoalController < Sinatra::Base
       redirect '/login'
     end
   end
-  
+
   get '/weekly_goals.json' do
     @weekly_goal = WeeklyGoal.first(:user_id=>session[:user_id],:start_date.gte=>getWeekDate(1),:end_date.lte=>getWeekDate(7))
     if(@weekly_goal.nil?)

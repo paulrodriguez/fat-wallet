@@ -1,3 +1,5 @@
+require_relative '../helpers/validate_login'
+
 class DateController < Sinatra::Base
   helpers CurrentWeek,CurrentMonth,ViewTypeDate, ValidateLogin
 

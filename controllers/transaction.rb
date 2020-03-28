@@ -1,4 +1,5 @@
 require_relative '../helpers/validate_login'
+
 class TransactionController < Sinatra::Base
   helpers ViewTypeDate,CurrentWeek,CurrentMonth, ValidateLogin
 

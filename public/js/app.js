@@ -202,6 +202,11 @@ function TransactionViewModel() {
       });
     }
 
+    /**
+     * set date range we are currently viewing
+     *
+     * @param {Object} data
+     */
     t.setViewDate = function(data) {
       this.date_range(data.date_range);
       this.start_date(data.start_date);
@@ -210,16 +215,14 @@ function TransactionViewModel() {
       this.date_counter(data.date_counter);
     }
 
+    /**
+     * update the transactions to view for a date
+     */
     t.updateViewDate = function(data) {
-      $.ajax({
-           url: "/view_dates.json",
-           type: "POST",
-           data: data
-      }).done(function(res){
-          t.setViewDate.call(t.datesViewing,res);
-          t.reloadTransactions();
-          //t.loadCurrentWeeklyGoal();
-      });
+      $.post("/view_dates.json", data, function(res) {
+        t.setViewDate.call(t.datesViewing,res);
+        t.reloadTransactions();
+      },'json');
 
     };
 
@@ -412,7 +415,7 @@ function TransactionViewModel() {
             if(data.type!==undefined && data.type=="new") {
               t.transactions.push(transaction);
             }
-            
+
             transaction.id(data.transaction.id);
             var transaction_date = convertDateToString(data.transaction.transaction_date);
             transaction.transaction_date(transaction_date);
